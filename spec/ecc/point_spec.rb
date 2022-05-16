@@ -96,12 +96,12 @@ RSpec.describe ECC::Point do
 
   describe '#to_s' do
     it 'parses point to expected format' do
-      expect(point.to_s).to eq "x:-1, y:-1, a:5, b:7"
+      expect(point.to_s).to eq "Point(-1, -1)_5_7"
     end
 
     context 'when is the identity point' do
       it 'parses nil values as string nils' do
-        expect(identity.to_s).to eq "x:nil, y:nil, a:5, b:7"
+        expect(identity.to_s).to eq "Point(infinity)_5_7"
       end
     end
   end

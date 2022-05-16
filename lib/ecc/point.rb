@@ -20,14 +20,10 @@ module ECC
       @a == other.a && @b == other.b && @x == other.x && @y == other.y 
     end
 
-    def !=(other)
-      return true unless other
+    def to_s
+      return "Point(infinity)_#{@a}_#{@b}" if @x.nil? && @y.nil?
 
-      @a != other.a || @b != other.b || @x != other.x || @y != other.y
-    end
-
-    def to_s 
-      "x:#{@x || 'nil'}, y:#{@y || 'nil'}, a:#{@a}, b:#{@b}"
+      "Point(#{@x}, #{@y})_#{@a}_#{@b}"
     end
 
     def +(other)
