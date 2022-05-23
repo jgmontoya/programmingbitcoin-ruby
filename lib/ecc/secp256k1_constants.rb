@@ -1,5 +1,4 @@
-module ECC
-  # parameters for curve secp256k1 used for Bitcoin
+module Secp256k1Constants
   A = 0
   B = 7
   P = 2**256 - 2**32 - 977

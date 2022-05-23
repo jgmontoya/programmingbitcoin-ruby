@@ -154,7 +154,7 @@ RSpec.describe ECC::Point do
 
       context 'when y is equal to 0' do
         let(:point) { described_class.new(-1, 0, 0, 1) }
-        
+
         it 'returns identity' do
           result = point + point
           expect([result.x, result.y]).to eq [nil, nil]
@@ -163,4 +163,3 @@ RSpec.describe ECC::Point do
     end
   end
 end
-

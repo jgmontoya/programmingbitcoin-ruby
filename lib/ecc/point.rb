@@ -47,46 +47,31 @@ module ECC
       current = self
       result = identity
       while coef != 0
-        if coef & 1 == 1
-          result += current
-        end
+        result += current if coef & 1 == 1
         current += current
         coef >>= 1
       end
-      return result
+      result
     end
 
     private
 
+    def coerce(something)
+      [self, something]
+    end
+
     def add_different_points(other)
-      slope = (other.y - @y) / (other.x - @x)
+      slope = @x.respond_to?(:to_f) ? (other.y - @y).to_f / (other.x - @x) :
+                                      (other.y - @y) / (other.x - @x)
       x = slope**2 - @x - other.x
       y = slope * (@x - x) - @y
       self.class.new(x, y, @a, @b)
     end
 
     def add_same_points
-     if @x.is_a?(Integer)
-      add_same_points_integer
-     else
-      add_same_points_field
-     end
-    end
-
-    def add_same_points_field
-      if (@y == ECC::FieldElement.new(0, @y.prime) )
-        return identity
-      end
-
-      slope = (ECC::FieldElement.new(3, @x.prime) * @x ** 2 + @a) / (ECC::FieldElement.new(2, @y.prime) * @y)
-      x = slope ** 2 - ECC::FieldElement.new(2, @x.prime) * @x
-      y = slope * (@x - x) - @y
-      self.class.new(x, y, @a, @b)
-    end
-
-    def add_same_points_integer
-      return identity if @y == 0
-      slope = (3 * @x ** 2 + @a).to_f / (2 * @y)
+      return identity if @y == 0 * self.x
+      slope = @x.respond_to?(:to_f) ? ((3 * @x ** 2 + @a).to_f / (2 * @y)) :
+                                      ((3 * @x ** 2 + @a) / (2 * @y))
       x = slope ** 2 - 2 * @x
       y = slope * (@x - x) - @y
       self.class.new(x, y, @a, @b)

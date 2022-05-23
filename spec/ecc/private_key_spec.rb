@@ -4,9 +4,9 @@ require 'ecc/signature'
 RSpec.describe ECC::PrivateKey do
 
   describe 'sign' do
-    let(:secret) { rand(ECC::N) }
+    let(:secret) { rand(Secp256k1Constants::N) }
     let(:private_key) { described_class.new(secret) }
-    let(:z) { rand(ECC::N) }
+    let(:z) { rand(Secp256k1Constants::N) }
     let(:signature) { private_key.sign(z) }
 
     it 'generates a valid signature' do

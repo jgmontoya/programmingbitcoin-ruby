@@ -2,7 +2,7 @@ require 'ecc/s256_point'
 require 'ecc/s256_field'
 require 'ecc/field_element'
 require 'ecc/signature'
-require 'ecc/constants'
+require 'ecc/secp256k1_constants.rb'
 
 RSpec.describe ECC::S256Point do
 
@@ -18,7 +18,7 @@ RSpec.describe ECC::S256Point do
   end
 
   describe 'order of group' do
-    let(:identity) { described_class.G * ECC::N }
+    let(:identity) { Secp256k1Constants::N * described_class::G }
 
     it 'returns identity point' do
       expect( [identity.x, identity.y]).to eq [nil, nil]
@@ -32,7 +32,7 @@ RSpec.describe ECC::S256Point do
     let(:point) { ECC::S256Point.new(x, y) }
 
     it 'returns public point' do
-      expect(described_class.G * secret).to eq point
+      expect(secret * described_class::G).to eq point
     end
   end
 

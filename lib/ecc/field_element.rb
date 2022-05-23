@@ -40,10 +40,15 @@ module ECC
     end
 
     def *(other)
-      check_prime_for('multiply', other)
+      if other.is_a?(FieldElement)
+        check_prime_for('multiply', other)
 
-      num = (@num * other.num) % @prime
-      self.class.new(num, @prime)
+        num = (@num * other.num) % @prime
+        self.class.new(num, @prime)
+      else
+        num = (@num * other) % @prime
+        self.class.new(num, @prime)
+      end
     end
 
     def **(exponent)
@@ -60,6 +65,10 @@ module ECC
     end
 
     private
+
+    def coerce(something)
+      [self, something]
+    end
 
     def check_prime_for(operation, other)
       if @prime != other.prime

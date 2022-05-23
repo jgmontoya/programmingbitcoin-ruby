@@ -1,13 +1,13 @@
 require_relative 's256_field.rb'
 require_relative 'point.rb'
-require_relative 'constants.rb'
+require_relative 'secp256k1_constants.rb'
 
 module ECC
   class S256Point < Point
 
     def initialize(x, y, a = 0, b = 7)
-      a = S256Field.new(ECC::A)
-      b = S256Field.new(ECC::B)
+      a = S256Field.new(Secp256k1Constants::A)
+      b = S256Field.new(Secp256k1Constants::B)
 
       if x.is_a?(Integer)
         x = S256Field.new(x)
@@ -18,6 +18,8 @@ module ECC
       end
     end
 
+    G = S256Point.new(Secp256k1Constants::G_X, Secp256k1Constants::G_Y)
+
     def to_s
       return "Point(infinity)_S256Field" if @x.nil? && @y.nil?
 
@@ -25,21 +27,20 @@ module ECC
     end
 
     def *(coef)
-      # to add eficiency, mod by order of group N
-      coef = coef % ECC::N
-      super
+      coef = coef % Secp256k1Constants::N
+      super(coef)
     end
 
     def self.G
-      S256Point.new(ECC::G_X, ECC::G_Y)
+      S256Point.new(Secp256k1Constants::G_X, Secp256k1Constants::G_Y)
     end
 
     def verify(z, sig)
-      s_inv = sig.s.pow(ECC::N - 2, ECC::N)
-      u = z * s_inv % ECC::N
-      v = sig.r * s_inv % ECC::N
+      s_inv = sig.s.pow(Secp256k1Constants::N - 2, Secp256k1Constants::N)
+      u = z * s_inv % Secp256k1Constants::N
+      v = sig.r * s_inv % Secp256k1Constants::N
       total = self.class.G.*(u) + self.*(v)
-      return total.x.num == sig.r
+      total.x.num == sig.r
     end
   end
 end

@@ -1,10 +1,10 @@
 require_relative 'field_element.rb'
-require_relative 'constants.rb'
+require_relative 'secp256k1_constants.rb'
 
 module ECC
   class S256Field < FieldElement
 
-    def initialize(num, prime = ECC::P)
+    def initialize(num, prime = Secp256k1Constants::P)
       super(num, prime)
     end
 

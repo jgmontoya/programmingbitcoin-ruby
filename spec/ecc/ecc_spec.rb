@@ -42,8 +42,12 @@ RSpec.describe ECC do
       let(:y) { ECC::FieldElement.new(71, prime) }
       let(:solution) { ECC::Point.new(x, y, a, b) }
 
-      it 'returns the point scalar product' do
+      it 'returns the point scalar product (scalar on the right side)' do
         expect(point_1 * scalar ).to eq solution
+      end
+
+      it 'returns the point scalar product (scalar on the left side)' do
+        expect(scalar * point_1 ).to eq solution
       end
   end
 end
