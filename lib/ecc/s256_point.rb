@@ -35,12 +35,12 @@ module ECC
       S256Point.new(Secp256k1Constants::G_X, Secp256k1Constants::G_Y)
     end
 
-    def verify(z, sig)
-      s_inv = sig.s.pow(Secp256k1Constants::N - 2, Secp256k1Constants::N)
+    def verify(z, signature)
+      s_inv = signature.s.pow(Secp256k1Constants::N - 2, Secp256k1Constants::N)
       u = z * s_inv % Secp256k1Constants::N
-      v = sig.r * s_inv % Secp256k1Constants::N
-      total = self.class.G.*(u) + self.*(v)
-      total.x.num == sig.r
+      v = signature.r * s_inv % Secp256k1Constants::N
+      random_target = (u * self.class::G + v * self).x.num
+      random_target == signature.r
     end
   end
 end
