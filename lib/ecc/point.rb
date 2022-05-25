@@ -1,3 +1,5 @@
+require_relative 'field_element.rb'
+
 module ECC
   class Point
     attr_reader :x, :y, :a, :b
@@ -17,13 +19,17 @@ module ECC
     def ==(other)
       return false unless other
 
-      @a == other.a && @b == other.b && @x == other.x && @y == other.y 
+      @a == other.a && @b == other.b && @x == other.x && @y == other.y
     end
 
     def to_s
       return "Point(infinity)_#{@a}_#{@b}" if @x.nil? && @y.nil?
 
-      "Point(#{@x}, #{@y})_#{@a}_#{@b}"
+      if @x.is_a?(Integer)
+        "Point(#{@x}, #{@y})_#{@a}_#{@b}"
+      else
+        "Point(#{@x.num}, #{@y.num})_#{@a.num}_#{@b.num} FieldElement(#{@x.prime})"
+      end
     end
 
     def +(other)
@@ -37,18 +43,35 @@ module ECC
       self != other ? add_different_points(other) : add_same_points
     end
 
+    def *(coef)
+      current = self
+      result = identity
+      while coef != 0
+        result += current if coef & 1 == 1
+        current += current
+        coef >>= 1
+      end
+      result
+    end
+
     private
 
+    def coerce(something)
+      [self, something]
+    end
+
     def add_different_points(other)
-      slope = (other.y - @y).to_f/(other.x - @x)
+      slope = @x.respond_to?(:to_f) ? (other.y - @y).to_f / (other.x - @x) :
+                                      (other.y - @y) / (other.x - @x)
       x = slope**2 - @x - other.x
       y = slope * (@x - x) - @y
       self.class.new(x, y, @a, @b)
     end
 
     def add_same_points
-      return identity if @y == 0
-      slope = (3 * @x ** 2 + @a).to_f / (2 * @y)
+      return identity if @y == 0 * self.x
+      slope = @x.respond_to?(:to_f) ? ((3 * @x ** 2 + @a).to_f / (2 * @y)) :
+                                      ((3 * @x ** 2 + @a) / (2 * @y))
       x = slope ** 2 - 2 * @x
       y = slope * (@x - x) - @y
       self.class.new(x, y, @a, @b)
