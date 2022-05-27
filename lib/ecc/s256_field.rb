@@ -10,5 +10,9 @@ module ECC
     def to_s
       @num.to_s.rjust(64, '0')
     end
+
+    def sqrt
+      self**((@prime + 1) / 4)
+    end
   end
 end
