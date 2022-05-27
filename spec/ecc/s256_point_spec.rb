@@ -2,17 +2,16 @@ require 'ecc/s256_point'
 require 'ecc/s256_field'
 require 'ecc/field_element'
 require 'ecc/signature'
-require 'ecc/secp256k1_constants.rb'
+require 'ecc/secp256k1_constants'
 
 RSpec.describe ECC::S256Point do
-
   describe 'init' do
     context 'when S256Point is initialized but is not part of the curve' do
       let(:x) { 0x887387e452b8eacc4acfde10d9aaf7e6d9a0f975aabb10d006e4da568744d06c }
       let(:y) { 0x61de6d95231cd29026e286df3e6ae4a894a3378e393e93a0f45b666329a0ae34 }
 
       it 'raises an ArgumentError' do
-        expect { described_class.new(x,y) }.to raise_error(ArgumentError)
+        expect { described_class.new(x, y) }.to raise_error(ArgumentError)
       end
     end
   end
@@ -21,7 +20,7 @@ RSpec.describe ECC::S256Point do
     let(:identity) { Secp256k1Constants::N * described_class::G }
 
     it 'returns identity point' do
-      expect( [identity.x, identity.y]).to eq [nil, nil]
+      expect([identity.x, identity.y]).to eq [nil, nil]
     end
   end
 
@@ -29,7 +28,7 @@ RSpec.describe ECC::S256Point do
     let(:secret) { 7 }
     let(:x) { 0x5cbdf0646e5db4eaa398f365f2ea7a0e3d419b7e0330e39ce92bddedcac4f9bc }
     let(:y) { 0x6aebca40ba255960a3178d6d861a54dba813d0b813fde7b5a5082628087264da }
-    let(:point) { ECC::S256Point.new(x, y) }
+    let(:point) { described_class.new(x, y) }
 
     it 'returns public point' do
       expect(secret * described_class::G).to eq point
@@ -39,7 +38,7 @@ RSpec.describe ECC::S256Point do
   describe 'verify' do
     let(:x) { 0x887387e452b8eacc4acfde10d9aaf7f6d9a0f975aabb10d006e4da568744d06c }
     let(:y) { 0x61de6d95231cd89026e286df3b6ae4a894a3378e393e93a0f45b666329a0ae34 }
-    let(:point) { ECC::S256Point.new(x, y) }
+    let(:point) { described_class.new(x, y) }
 
     let(:r) { 0xac8d1c87e51d0d441be8b3dd5b05c8795b48875dffe00b7ffcfac23010d3a395 }
     let(:s) { 0x68342ceff8935ededd102dd876ffd6ba72d6a427a3edb13d26eb0781cb423c4 }

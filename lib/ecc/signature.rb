@@ -1,5 +1,4 @@
 module ECC
-
   class Signature
     attr_reader :r, :s
 

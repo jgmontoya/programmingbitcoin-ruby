@@ -1,7 +1,7 @@
-require_relative 's256_point.rb'
-require_relative 'signature.rb'
-require_relative 'secp256k1_constants.rb'
-require_relative '../helper.rb'
+require_relative 's256_point'
+require_relative 'signature'
+require_relative 'secp256k1_constants'
+require_relative '../helper'
 require 'openssl'
 
 module ECC
@@ -21,7 +21,7 @@ module ECC
       k = deterministic_k(z)
       r = (k * ECC::S256Point::G).x.num
       k_inv = k.pow(Secp256k1Constants::N - 2, Secp256k1Constants::N)
-      s = (z + r * @secret ) * k_inv % Secp256k1Constants::N
+      s = (z + r * @secret) * k_inv % Secp256k1Constants::N
 
       s = Secp256k1Constants::N - s if s > Secp256k1Constants::N / 2
 

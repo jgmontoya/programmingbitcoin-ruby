@@ -1,21 +1,19 @@
-require_relative 's256_field.rb'
-require_relative 'point.rb'
-require_relative 'secp256k1_constants.rb'
+require_relative 's256_field'
+require_relative 'point'
+require_relative 'secp256k1_constants'
 
 module ECC
   class S256Point < Point
-
-    def initialize(x, y, a = 0, b = 7)
+    def initialize(x, y, _a = 0, _b = 7)
       a = S256Field.new(Secp256k1Constants::A)
       b = S256Field.new(Secp256k1Constants::B)
 
       if x.is_a?(Integer)
         x = S256Field.new(x)
         y = S256Field.new(y)
-        super(x, y, a, b)
-      else
-        super(x, y, a, b)
       end
+
+      super(x, y, a, b)
     end
 
     G = S256Point.new(Secp256k1Constants::G_X, Secp256k1Constants::G_Y)

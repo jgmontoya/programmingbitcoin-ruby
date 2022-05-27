@@ -6,10 +6,11 @@ RSpec.describe ECC::Signature do
   let(:signature) { described_class.new(r, s) }
 
   describe 'to_s' do
-    let(:string_format) {
+    let(:string_format) do
       "Signature(78047132305074547209667415378684003360790728528333174453334458954808711947157,"\
       " 2945795152904547855448158643091235482997756069461486099501216307557115896772)"
-      }
+    end
+
     it 'parses signature to expected format' do
       expect(signature.to_s).to eq string_format
     end
