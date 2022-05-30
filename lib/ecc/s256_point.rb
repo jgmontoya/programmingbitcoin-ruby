@@ -1,9 +1,14 @@
 require_relative 's256_field'
 require_relative 'point'
 require_relative 'secp256k1_constants'
+require_relative '../encoding_helper'
+require_relative '../hash_helper'
 
 module ECC
   class S256Point < Point
+    include EncodingHelper
+    extend EncodingHelper
+
     def initialize(x, y, _a = 0, _b = 7)
       a = S256Field.new(Secp256k1Constants::A)
       b = S256Field.new(Secp256k1Constants::B)
@@ -29,10 +34,6 @@ module ECC
       super(coef)
     end
 
-    def self.G
-      S256Point.new(Secp256k1Constants::G_X, Secp256k1Constants::G_Y)
-    end
-
     def verify(z, signature)
       s_inv = signature.s.pow(Secp256k1Constants::N - 2, Secp256k1Constants::N)
       u = z * s_inv % Secp256k1Constants::N
@@ -40,5 +41,47 @@ module ECC
       random_target = (u * self.class::G + v * self).x.num
       random_target == signature.r
     end
+
+    def sec(compressed: true)
+      if compressed
+        prefix = y.num.even? ? to_bytes(2, 1, 'big') : to_bytes(3, 1, 'big')
+        return prefix + to_bytes(x.num, 32, 'big')
+      end
+
+      to_bytes(4, 1, 'big') + to_bytes(x.num, 32, 'big') + to_bytes(y.num, 32, 'big')
+    end
+
+    def hash160(compressed: true)
+      HashHelper.hash160(sec(compressed: compressed))
+    end
+
+    def address(compressed: true, testnet: false)
+      prefix = testnet ? "\x6f" : "\x00"
+      encode_base58_checksum(prefix + hash160(compressed: compressed))
+    end
+
+    def self.parse(sec_bin)
+      return parse_uncompressed(sec_bin) if sec_bin[0] == "\x04"
+
+      x = S256Field.new(from_bytes(sec_bin[1..], 'big'))
+      alpha = x**3 + S256Field.new(Secp256k1Constants::B)
+      beta = alpha.sqrt
+      if beta.num.even?
+        even_beta = beta
+        odd_beta = S256Field.new(Secp256k1Constants::P - beta.num)
+      else
+        even_beta = S256Field.new(Secp256k1Constants::P - beta.num)
+        odd_beta = beta
+      end
+      sec_bin[0] == "\x02" ? new(x, even_beta) : new(x, odd_beta)
+    end
+
+    def self.parse_uncompressed(sec_bin)
+      x = from_bytes(sec_bin.slice(1, 32), 'big')
+      y = from_bytes(sec_bin.slice(33, 32), 'big')
+      new(x, y)
+    end
+
+    private_class_method :parse_uncompressed
   end
 end
