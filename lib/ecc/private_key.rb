@@ -1,11 +1,12 @@
 require_relative 's256_point'
 require_relative 'signature'
 require_relative 'secp256k1_constants'
-require_relative '../helper'
+require_relative '../encoding_helper'
 require 'openssl'
 
 module ECC
   class PrivateKey
+    include EncodingHelper
     attr_reader :point
 
     def initialize(secret)
@@ -28,32 +29,39 @@ module ECC
       ECC::Signature.new(r, s)
     end
 
+    def wif(compressed: true, testnet: false)
+      secret_bytes = to_bytes(@secret, 32, 'big')
+      prefix = to_bytes(testnet ? 0xef : 0x80, 1, 'big')
+      suffix = compressed ? "\x01" : ""
+      encode_base58_checksum("#{prefix}#{secret_bytes}#{suffix}")
+    end
+
+    private
+
     def deterministic_k(z)
-      k = "\x00".b * 32
-      v = "\x01".b * 32
-      if z > Secp256k1Constants::N
-        z -= Secp256k1Constants::N
-      end
+      z -= Secp256k1Constants::N if z > Secp256k1Constants::N
 
-      z_bytes = [z].pack("N").rjust(32, "\x00".b)
-      secret_bytes = [@secret].pack("N").rjust(32, "\x00".b)
+      z_bytes = to_bytes(z, 32, 'big')
+      secret_bytes = to_bytes(@secret, 32, 'big')
 
-      message_1 = v + "\x00".b + secret_bytes + z_bytes
-      k = OpenSSL::HMAC.digest("SHA256", k, message_1)
-      v = OpenSSL::HMAC.digest("SHA256", k, v)
+      k = sha256_hmac("\x00" * 32, "#{"\x01" * 32}\x00#{secret_bytes}#{z_bytes}")
+      v = sha256_hmac(k, "\x01" * 32)
 
-      message_2 = v + "\x01".b + secret_bytes + z_bytes
-      k = OpenSSL::HMAC.digest("SHA256", k, message_2)
-      v = OpenSSL::HMAC.digest("SHA256", k, v)
+      k = sha256_hmac(k, "#{v}\x01#{secret_bytes}#{z_bytes}")
+      v = sha256_hmac(k, v)
 
-      while true
-        v = OpenSSL::HMAC.digest("SHA256", k, v)
-        candidate = v.unpack("N").first
+      loop do
+        v = sha256_hmac(k, v)
+        candidate = from_bytes(v, 'big')
         return candidate if candidate >= 1 && candidate < Secp256k1Constants::N
 
-        k = OpenSSL::HMAC.digest("SHA256", k, v + "\x00".b)
-        v = OpenSSL::HMAC.digest("SHA256", k, v)
+        k = sha256_hmac(k, "#{v}\x00")
+        v = sha256_hmac(k, v)
       end
+    end
+
+    def sha256_hmac(key, data)
+      OpenSSL::HMAC.digest("SHA256", key, data)
     end
   end
 end
