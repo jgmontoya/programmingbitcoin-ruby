@@ -30,10 +30,10 @@ module Bitcoin
       attr_accessor :amount, :raw_script_pubkey
     end
 
-    def self.parse(_io)
+    def self.parse(_io, _options = {})
       io = BitcoinDataIO(_io)
 
-      new.tap do |tx|
+      new(_options).tap do |tx|
         tx.version = io.read_le_int32
         io.read_varint.times { tx.ins << TxIn.parse(io) }
         io.read_varint.times { tx.outs << TxOut.parse(io) }
@@ -43,9 +43,30 @@ module Bitcoin
 
     attr_accessor :version, :locktime, :ins, :outs
 
-    def initialize
+    def initialize(tx_fetcher: nil)
+      @tx_fetcher = tx_fetcher
       @ins = []
       @outs = []
+    end
+
+    def fee
+      @fee ||= calculate_fee
+    end
+
+    private
+
+    def calculate_fee
+      raise 'transaction fetcher not provided' if @tx_fetcher.nil?
+
+      input_amount = ins.sum do |input|
+        raw_input_tx = @tx_fetcher.fetch(input.prev_tx)
+        input_tx = Bitcoin::Tx.parse(raw_input_tx)
+        input_tx.outs[input.prev_index].amount
+      end
+
+      output_amount = outs.sum(&:amount)
+
+      input_amount - output_amount
     end
   end
 end
