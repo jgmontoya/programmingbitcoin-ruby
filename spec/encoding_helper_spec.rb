@@ -72,4 +72,22 @@ RSpec.describe EncodingHelper do
       expect(described_module.int_to_little_endian(1, 4)).to eq "\x01\x00\x00\x00"
     end
   end
+
+  describe '#encode_num' do
+    context 'when the number is 0' do
+      let(:num) { 0 }
+
+      it 'returns an empty string' do
+        expect(described_module.encode_num(num)).to eq ""
+      end
+    end
+
+    context 'when the number is not 0' do
+      let(:num) { 7 }
+
+      it 'returns the number as a single byte' do
+        expect(described_module.encode_num(num)).to eq "\x07"
+      end
+    end
+  end
 end
