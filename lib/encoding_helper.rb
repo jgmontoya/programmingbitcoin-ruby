@@ -1,4 +1,5 @@
-require 'hash_helper'
+# encoding: ascii-8bit
+require_relative 'hash_helper'
 
 module EncodingHelper
   BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
@@ -53,6 +54,26 @@ module EncodingHelper
 
   def int_to_little_endian(int, length)
     to_bytes(int, length, 'little')
+  end
+
+  def encode_varint(integer)
+    if integer < 0xfd
+      int_to_little_endian(integer, 1)
+    elsif integer < 0x10000
+      "\xfd#{int_to_little_endian(integer, 2)}"
+    elsif integer < 0x100000000
+      "\xfe#{int_to_little_endian(integer, 4)}"
+    elsif integer < 0x10000000000000000
+      "\xff#{int_to_little_endian(integer, 8)}"
+    else
+      raise EncodingError.new("integer too large: #{integer}")
+    end
+  end
+
+  def encode_num(num)
+    return '' if num.zero?
+
+    int_to_little_endian(num, 1)
   end
 
   private
