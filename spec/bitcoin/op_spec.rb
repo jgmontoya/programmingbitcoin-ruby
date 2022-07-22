@@ -3,12 +3,15 @@ require 'bitcoin/op'
 require 'ecc/s256_point'
 require 'ecc/signature'
 require 'hash_helper'
+require 'encoding_helper'
 
 RSpec.describe Bitcoin::Op do
+  include EncodingHelper
+
   let(:described_module) { Object.new.extend described_class }
 
   describe '#op_0' do
-    it 'pushes a 0 (empty string) into the stack' do
+    it 'pushes an empty string into the stack' do
       stack = []
 
       described_module.op_0(stack)
@@ -16,20 +19,13 @@ RSpec.describe Bitcoin::Op do
     end
   end
 
-  describe '#op_verify' do
-    context 'when the top element of the stack is an empty string' do
-      it 'returns false' do
-        stack = [1, '']
+  (1..16).each do |num|
+    describe "#op_#{num}" do
+      it "pushes a #{num} into the stack" do
+        stack = []
 
-        expect(described_module.op_verify(stack)).to be false
-      end
-    end
-
-    context 'when the top element of the stack is a nonzero string' do
-      it 'returns true' do
-        stack = [1, ['11'].pack("H*")]
-
-        expect(described_module.op_verify(stack)).to be true
+        described_module.send(:"op_#{num}", stack)
+        expect(stack).to eq([to_bytes(num, 1, 'little')])
       end
     end
   end
@@ -72,6 +68,24 @@ RSpec.describe Bitcoin::Op do
         described_module.op_equal(stack)
 
         expect(stack).to eq([""])
+      end
+    end
+  end
+
+  describe '#op_verify' do
+    context 'when the top element of the stack is an empty string' do
+      it 'returns false' do
+        stack = [1, '']
+
+        expect(described_module.op_verify(stack)).to be false
+      end
+    end
+
+    context 'when the top element of the stack is a nonzero string' do
+      it 'returns true' do
+        stack = [1, ['11'].pack("H*")]
+
+        expect(described_module.op_verify(stack)).to be true
       end
     end
   end
@@ -196,22 +210,6 @@ RSpec.describe Bitcoin::Op do
   xdescribe '#op_pushdata2' do it 'performs op_pushdata2 correctly' end
   xdescribe '#op_pushdata4' do it 'performs op_pushdata4 correctly' end
   xdescribe '#op_1negate' do it 'performs op_1negate correctly' end
-  xdescribe '#op_1' do it 'performs op_1 correctly' end
-  xdescribe '#op_2' do it 'performs op_2 correctly' end
-  xdescribe '#op_3' do it 'performs op_3 correctly' end
-  xdescribe '#op_4' do it 'performs op_4 correctly' end
-  xdescribe '#op_5' do it 'performs op_5 correctly' end
-  xdescribe '#op_6' do it 'performs op_6 correctly' end
-  xdescribe '#op_7' do it 'performs op_7 correctly' end
-  xdescribe '#op_8' do it 'performs op_8 correctly' end
-  xdescribe '#op_9' do it 'performs op_9 correctly' end
-  xdescribe '#op_10' do it 'performs op_10 correctly' end
-  xdescribe '#op_11' do it 'performs op_11 correctly' end
-  xdescribe '#op_12' do it 'performs op_12 correctly' end
-  xdescribe '#op_13' do it 'performs op_13 correctly' end
-  xdescribe '#op_14' do it 'performs op_14 correctly' end
-  xdescribe '#op_15' do it 'performs op_15 correctly' end
-  xdescribe '#op_16' do it 'performs op_16 correctly' end
   xdescribe '#op_nop' do it 'performs op_nop correctly' end
   xdescribe '#op_if' do it 'performs op_if correctly' end
   xdescribe '#op_notif' do it 'performs op_notif correctly' end
