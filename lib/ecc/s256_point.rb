@@ -3,7 +3,7 @@ require_relative 'point'
 require_relative 'secp256k1_constants'
 require_relative '../encoding_helper'
 require_relative '../hash_helper'
-
+require_relative '../address_helper'
 module ECC
   class S256Point < Point
     include EncodingHelper
@@ -56,8 +56,10 @@ module ECC
     end
 
     def address(compressed: true, testnet: false)
-      prefix = testnet ? "\x6f" : "\x00"
-      encode_base58_checksum(prefix + hash160(compressed: compressed))
+      AddressHelper.h160_to_p2pkh_address(
+        hash160(compressed: compressed),
+        testnet: testnet
+      )
     end
 
     def self.parse(sec_bin)
