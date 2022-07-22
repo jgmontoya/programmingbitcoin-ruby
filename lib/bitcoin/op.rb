@@ -2,8 +2,15 @@ require_relative '../hash_helper'
 require_relative '../encoding_helper'
 require_relative '../ecc/signature'
 
+# rubocop:disable Metrics/CyclomaticComplexity
+# rubocop:disable Metrics/PerceivedComplexity
+# rubocop:disable Metrics/AbcSize
+# rubocop:disable Metrics/MethodLength
+# rubocop:disable Metrics/ModuleLength
+# rubocop:disable Naming/VariableNumber
+
 module Bitcoin
-  module Op # rubocop:disable Metrics/ModuleLength
+  module Op
     include EncodingHelper
 
     def op_0(stack)
@@ -11,6 +18,85 @@ module Bitcoin
       true
     end
 
+    def op_1(stack)
+      stack << encode_num(1)
+      true
+    end
+
+    def op_2(stack)
+      stack << encode_num(2)
+      true
+    end
+
+    def op_3(stack)
+      stack << encode_num(3)
+      true
+    end
+
+    def op_4(stack)
+      stack << encode_num(4)
+      true
+    end
+
+    def op_5(stack)
+      stack << encode_num(5)
+      true
+    end
+
+    def op_6(stack)
+      stack << encode_num(6)
+      true
+    end
+
+    def op_7(stack)
+      stack << encode_num(7)
+      true
+    end
+
+    def op_8(stack)
+      stack << encode_num(8)
+      true
+    end
+
+    def op_9(stack)
+      stack << encode_num(9)
+      true
+    end
+
+    def op_10(stack)
+      stack << encode_num(10)
+      true
+    end
+
+    def op_11(stack)
+      stack << encode_num(11)
+      true
+    end
+
+    def op_12(stack)
+      stack << encode_num(12)
+      true
+    end
+
+    def op_13(stack)
+      stack << encode_num(13)
+      true
+    end
+
+    def op_14(stack)
+      stack << encode_num(14)
+      true
+    end
+
+    def op_15(stack)
+      stack << encode_num(15)
+      true
+    end
+
+    def op_16(stack)
+      stack << encode_num(16)
+      true
+    end
     def op_drop(stack)
       return false if stack.empty?
 

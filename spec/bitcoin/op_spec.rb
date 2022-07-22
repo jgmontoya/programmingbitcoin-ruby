@@ -8,11 +8,155 @@ RSpec.describe Bitcoin::Op do
   let(:described_module) { Object.new.extend described_class }
 
   describe '#op_0' do
-    it 'pushes a 0 (empty string) into the stack' do
+    it 'pushes an empty string into the stack' do
       stack = []
 
       described_module.op_0(stack)
       expect(stack).to eq([""])
+    end
+  end
+
+  describe '#op_1' do
+    it 'pushes a 1 into the stack' do
+      stack = []
+
+      described_module.op_1(stack)
+      expect(stack).to eq(["\x01"])
+    end
+  end
+
+  describe '#op_2' do
+    it 'pushes a 2 into the stack' do
+      stack = []
+
+      described_module.op_2(stack)
+      expect(stack).to eq(["\x02"])
+    end
+  end
+
+  describe '#op_3' do
+    it 'pushes a 3 into the stack' do
+      stack = []
+
+      described_module.op_3(stack)
+      expect(stack).to eq(["\x03"])
+    end
+  end
+
+  describe '#op_4' do
+    it 'pushes a 4 into the stack' do
+      stack = []
+
+      described_module.op_4(stack)
+      expect(stack).to eq(["\x04"])
+    end
+  end
+
+  describe '#op_5' do
+    it 'pushes a 5 into the stack' do
+      stack = []
+
+      described_module.op_5(stack)
+      expect(stack).to eq(["\x05"])
+    end
+  end
+
+  describe '#op_6' do
+    it 'pushes a 6 into the stack' do
+      stack = []
+
+      described_module.op_6(stack)
+      expect(stack).to eq(["\x06"])
+    end
+  end
+
+  describe '#op_7' do
+    it 'pushes a 7 into the stack' do
+      stack = []
+
+      described_module.op_7(stack)
+      expect(stack).to eq(["\x07"])
+    end
+  end
+
+  describe '#op_8' do
+    it 'pushes a 8 into the stack' do
+      stack = []
+
+      described_module.op_8(stack)
+      expect(stack).to eq(["\x08"])
+    end
+  end
+
+  describe '#op_9' do
+    it 'pushes a 9 into the stack' do
+      stack = []
+
+      described_module.op_9(stack)
+      expect(stack).to eq(["\x09"])
+    end
+  end
+
+  describe '#op_10' do
+    it 'pushes a 10 into the stack' do
+      stack = []
+
+      described_module.op_10(stack)
+      expect(stack).to eq(["\x0a"])
+    end
+  end
+
+  describe '#op_11' do
+    it 'pushes a 11 into the stack' do
+      stack = []
+
+      described_module.op_11(stack)
+      expect(stack).to eq(["\x0b"])
+    end
+  end
+
+  describe '#op_12' do
+    it 'pushes a 12 into the stack' do
+      stack = []
+
+      described_module.op_12(stack)
+      expect(stack).to eq(["\x0c"])
+    end
+  end
+
+  describe '#op_13' do
+    it 'pushes a 13 into the stack' do
+      stack = []
+
+      described_module.op_13(stack)
+      expect(stack).to eq(["\x0d"])
+    end
+  end
+
+  describe '#op_14' do
+    it 'pushes a 14 into the stack' do
+      stack = []
+
+      described_module.op_14(stack)
+      expect(stack).to eq(["\x0e"])
+    end
+  end
+
+  describe '#op_15' do
+    it 'pushes a 15 into the stack' do
+      stack = []
+
+      described_module.op_15(stack)
+      expect(stack).to eq(["\x0f"])
+    end
+  end
+
+  describe '#op_16' do
+    it 'pushes a 16 into the stack' do
+      stack = []
+
+      described_module.op_16(stack)
+      expect(stack).to eq(["\x10"])
     end
   end
 
@@ -139,22 +283,6 @@ RSpec.describe Bitcoin::Op do
   xdescribe '#op_pushdata2' do it 'performs op_pushdata2 correctly' end
   xdescribe '#op_pushdata4' do it 'performs op_pushdata4 correctly' end
   xdescribe '#op_1negate' do it 'performs op_1negate correctly' end
-  xdescribe '#op_1' do it 'performs op_1 correctly' end
-  xdescribe '#op_2' do it 'performs op_2 correctly' end
-  xdescribe '#op_3' do it 'performs op_3 correctly' end
-  xdescribe '#op_4' do it 'performs op_4 correctly' end
-  xdescribe '#op_5' do it 'performs op_5 correctly' end
-  xdescribe '#op_6' do it 'performs op_6 correctly' end
-  xdescribe '#op_7' do it 'performs op_7 correctly' end
-  xdescribe '#op_8' do it 'performs op_8 correctly' end
-  xdescribe '#op_9' do it 'performs op_9 correctly' end
-  xdescribe '#op_10' do it 'performs op_10 correctly' end
-  xdescribe '#op_11' do it 'performs op_11 correctly' end
-  xdescribe '#op_12' do it 'performs op_12 correctly' end
-  xdescribe '#op_13' do it 'performs op_13 correctly' end
-  xdescribe '#op_14' do it 'performs op_14 correctly' end
-  xdescribe '#op_15' do it 'performs op_15 correctly' end
-  xdescribe '#op_16' do it 'performs op_16 correctly' end
   xdescribe '#op_nop' do it 'performs op_nop correctly' end
   xdescribe '#op_if' do it 'performs op_if correctly' end
   xdescribe '#op_notif' do it 'performs op_notif correctly' end
