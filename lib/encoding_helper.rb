@@ -70,10 +70,28 @@ module EncodingHelper
     end
   end
 
+  def h160_to_p2pkh_address(h160, testnet: false)
+    prefix = testnet ? "\x6f" : "\x00"
+
+    encode_base58_checksum(prefix + h160)
+  end
+
+  def h160_to_p2sh_address(h160, testnet: false)
+    prefix = testnet ? "\xc4" : "\x05"
+
+    encode_base58_checksum(prefix + h160)
+  end
+
   def encode_num(num)
     return '' if num.zero?
 
     int_to_little_endian(num, 1)
+  end
+
+  def decode_num(string)
+    return 0 if string.empty?
+
+    little_endian_to_int(string)
   end
 
   private
