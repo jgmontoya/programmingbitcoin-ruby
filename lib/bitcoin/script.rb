@@ -95,11 +95,7 @@ module Bitcoin
 
       while cmds.any?
         cmd = cmds.shift
-        if cmd.is_a? Integer
-          return false unless execute_operation(cmd, cmds, stack, altstack, z)
-        else
-          stack.append(cmd)
-        end
+        return false unless resolve_cmd(cmd, cmds, stack, altstack, z)
       end
 
       return false if stack.empty? || stack.pop.empty?
@@ -107,7 +103,44 @@ module Bitcoin
       true
     end
 
+    def p2sh?(cmds = @cmds)
+      cmds.length == 3 \
+      && cmds[0] == 169 \
+      && cmds[1].is_a?(String) && cmds[1].length == 20 \
+      && cmds[2] == 135
+    end
+
     private
+
+    def resolve_cmd(cmd, cmds, stack, altstack, z)
+      if cmd.is_a? Integer
+        return execute_operation(cmd, cmds, stack, altstack, z)
+      else
+        stack.append(cmd)
+
+        if p2sh?(cmds)
+          return execute_p2sh(cmd, cmds, stack)
+        end
+      end
+
+      true
+    end
+
+    def execute_p2sh(cmd, cmds, stack)
+      cmds.pop
+      h160 = cmds.pop
+      cmds.pop
+
+      return false unless op_hash160(stack)
+
+      stack.append(h160)
+      return false unless op_equal(stack)
+      return false unless op_verify(stack)
+
+      redeem_script = encode_varint(cmd.length) + cmd
+      stream = StringIO.new(redeem_script)
+      cmds.concat self.class.parse(stream).cmds
+    end
 
     def raw_serialize
       @cmds.map do |cmd|
