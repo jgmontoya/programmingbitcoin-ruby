@@ -87,6 +87,49 @@ module Bitcoin
       op_equal(stack) && op_verify(stack)
     end
 
+    def op_checkmultisig(stack, z) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Naming/MethodParameterName
+      return false if stack.empty?
+
+      n = decode_num(stack.pop)
+      return false if stack.length < n + 1
+
+      sec_pubkeys = []
+      n.times { sec_pubkeys << stack.pop }
+
+      m = decode_num(stack.pop)
+      return false if stack.length < m + 1
+
+      der_signatures = []
+      m.times { der_signatures << stack.pop[0...-1] }
+
+      stack.pop
+
+      begin
+        points = sec_pubkeys.map { |sec| ECC::S256Point.parse(sec) }
+        sigs = der_signatures.map { |der| ECC::Signature.parse(der) }
+
+        sigs_to_verify = m
+        sigs.each do |sig|
+          return false if points.empty?
+
+          while points.any?
+            point = points.shift
+            if point.verify(z, sig)
+              sigs_to_verify -= 1
+              break
+            end
+          end
+          return false if sigs_to_verify > points.length
+        end
+
+        stack.append(encode_num(1))
+      rescue SyntaxError, ECC::SignatureError
+        return false
+      end
+
+      true
+    end
+
     OP_CODE_NAMES = {
       0 => 'OP_0',
       76 => 'OP_PUSHDATA1',
