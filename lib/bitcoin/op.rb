@@ -98,6 +98,16 @@ module Bitcoin
       stack << encode_num(16)
       true
     end
+
+    def op_verify(stack)
+      return false if stack.empty?
+
+      element = stack.pop
+      return false if decode_num(element).zero?
+
+      true
+    end
+
     def op_drop(stack)
       return false if stack.empty?
 
@@ -109,6 +119,16 @@ module Bitcoin
       return false if stack.empty?
 
       stack << stack.last
+      true
+    end
+
+    def op_equal(stack)
+      return false if stack.length < 2
+
+      element1 = stack.pop
+      element2 = stack.pop
+
+      stack << (element1 == element2 ? encode_num(1) : encode_num(0))
       true
     end
 
