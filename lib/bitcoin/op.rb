@@ -1,6 +1,7 @@
 require_relative '../hash_helper'
 require_relative '../encoding_helper'
 require_relative '../ecc/signature'
+require_relative '../ecc/s256_point'
 
 # rubocop:disable Metrics/CyclomaticComplexity
 # rubocop:disable Metrics/PerceivedComplexity
@@ -141,6 +142,44 @@ module Bitcoin
       end
 
       stack << (point.verify(z, sig) ? encode_num(1) : encode_num(0))
+      true
+    end
+
+    def op_checkmultisig(stack, z)
+      return false if stack.empty?
+
+      n = decode_num(stack.pop)
+      return false if stack.length < n + 1
+
+      sec_pubkeys = []
+      n.times { sec_pubkeys << stack.pop }
+
+      m = decode_num(stack.pop)
+      return false if stack.length < m + 1
+
+      der_signatures = []
+      m.times { der_signatures << stack.pop }
+
+      stack.pop
+
+      begin
+        points = sec_pubkeys.map { |sec| ECC::S256Point.parse(sec) }
+        sigs = der_signatures.map { |der| ECC::Signature.parse(der) }
+
+        sigs.each do |sig|
+          return false if points.empty?
+
+          while points.any?
+            point = points.shift
+            break if point.verify(z, sig)
+          end
+        end
+
+        stack.append(encode_num(1))
+      rescue SyntaxError, ECC::SignatureError
+        return false
+      end
+
       true
     end
 

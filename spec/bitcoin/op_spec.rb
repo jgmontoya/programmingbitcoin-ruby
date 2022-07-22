@@ -277,6 +277,108 @@ RSpec.describe Bitcoin::Op do
     end
   end
 
+  describe '#op_checkmultisig' do
+    context 'when the stack is empty' do
+      let(:stack) { [] }
+      let(:z) { 1 }
+
+      it 'returns false' do
+        expect(described_module.op_checkmultisig(stack, z)).to be false
+      end
+    end
+
+    context 'when n does not match the number of pubkeys' do
+      let(:z) { 1 }
+      let(:stack) do [
+        ['1111'].pack("H*"),
+        ['2222'].pack("H*"),
+        "\x05"
+      ]
+      end
+
+      it 'returns false' do
+        expect(described_module.op_checkmultisig(stack, z)).to be false
+      end
+    end
+
+    context 'when m does not match the number of signatures' do
+      let(:z) { 1 }
+      let(:stack) do [
+        "\x00",
+        ['3333'].pack("H*"),
+        "\x03",
+        ['2222'].pack("H*"),
+        ['1111'].pack("H*"),
+        "\x02"
+      ]
+      end
+
+      it 'returns false' do
+        expect(described_module.op_checkmultisig(stack, z)).to be false
+      end
+    end
+
+    context 'when there is no points for verfiying a signature' do
+      let(:z) { 1 }
+      let(:stack) do [
+        "\x00",
+        ['3333'].pack("H*"),
+        "\x01",
+        "\x00"
+      ]
+      end
+
+      it 'returns false' do
+        expect(described_module.op_checkmultisig(stack, z)).to be false
+      end
+    end
+
+    context 'when m of the signatures are valid for m distinct public keys' do
+      raw_sign1 = ['1111'].pack("H*")
+      raw_sign2 = ['2222'].pack("H*")
+      raw_point1 = ['3333'].pack("H*")
+      raw_point2 = ['4444'].pack("H*")
+      raw_point3 = ['5555'].pack("H*")
+
+      let(:z) { 1 }
+      let(:stack) do
+        [
+          "\x00",
+          raw_sign2,
+          raw_sign1,
+          "\x02",
+          raw_point3,
+          raw_point2,
+          raw_point1,
+          "\x03"
+        ]
+      end
+      let(:sign1) { instance_double(ECC::Signature) }
+      let(:sign2) { instance_double(ECC::Signature) }
+      let(:point1) { instance_double(ECC::S256Point) }
+      let(:point2) { instance_double(ECC::S256Point) }
+      let(:point3) { instance_double(ECC::S256Point) }
+
+      before do
+        allow(point1).to receive(:verify).with(z, sign1).and_return(true)
+        allow(point2).to receive(:verify).with(z, sign2).and_return(false)
+        allow(point3).to receive(:verify).with(z, sign2).and_return(true)
+
+        allow(ECC::Signature).to receive(:parse).and_return(sign1, sign2)
+        allow(ECC::S256Point).to receive(:parse).and_return(point1, point2, point3)
+      end
+
+      it 'returns true' do
+        expect(described_module.op_checkmultisig(stack, z)).to be true
+      end
+
+      it 'pushes a 1 into the stack' do
+        described_module.op_checkmultisig(stack, z)
+        expect(stack).to eq(["\x01"])
+      end
+    end
+  end
+
   # rubocop:disable RSpec/EmptyLineAfterExampleGroup
   # rubocop:disable Style/BlockDelimiters
   xdescribe '#op_pushdata1' do it 'performs op_pushdata1 correctly' end
@@ -336,7 +438,6 @@ RSpec.describe Bitcoin::Op do
   xdescribe '#op_sha256' do it 'performs op_sha256 correctly' end
   xdescribe '#op_codeseparator' do it 'performs op_codeseparator correctly' end
   xdescribe '#op_checksigverify' do it 'performs op_checksigverify correctly' end
-  xdescribe '#op_checkmultisig' do it 'performs op_checkmultisig correctly' end
   xdescribe '#op_checkmultisigverify' do it 'performs op_checkmultisigverify correctly' end
   xdescribe '#op_nop1' do it 'performs op_nop1 correctly' end
   xdescribe '#op_checklocktimeverify' do it 'performs op_checklocktimeverify correctly' end
