@@ -1,33 +1,67 @@
 require_relative '../bitcoin_data_io'
+require_relative '../encoding_helper'
+require_relative '../hash_helper'
+require_relative 'script'
+require 'net/http'
+require 'uri'
+require 'stringio'
 
 module Bitcoin
   class Tx
+    include EncodingHelper
+    SIGHASH_ALL = 1
+    SIGHASH_NONE = 2
+    SIGHASH_SINGLE = 3
+
     class TxIn
+      include EncodingHelper
+
+      def initialize(prev_tx, prev_index, script_sig=nil, sequence=0xffffffff)
+        @prev_tx = prev_tx
+        @prev_index = prev_index
+        @script_sig = script_sig || Script.new
+        @sequence = sequence
+      end
+
       def self.parse(_io)
         io = BitcoinDataIO(_io)
 
-        new.tap do |obj|
-          obj.prev_tx = io.read_le(32)
-          obj.prev_index = io.read_le_int32
-          obj.raw_script_sig = _io.read(io.read_varint)
-          obj.sequence = io.read_le_int32
-        end
+        prev_tx = io.read_le(32)
+        prev_index = io.read_le_int32
+        script_sig = Script.parse io
+        sequence = io.read_le_int32
+
+        new(prev_tx, prev_index, script_sig, sequence)
       end
 
-      attr_accessor :prev_tx, :prev_index, :raw_script_sig, :sequence
+      def serialize
+        result = prev_tx.reverse
+        result << to_bytes(prev_index, 4, 'little')
+        result << @script_sig.serialize
+        result << to_bytes(sequence, 4, 'little')
+      end
+
+      attr_accessor :prev_tx, :prev_index, :script_sig, :sequence
     end
 
     class TxOut
+      include EncodingHelper
+
       def self.parse(_io)
         io = BitcoinDataIO(_io)
 
         new.tap do |obj|
           obj.amount = io.read_le_int64
-          obj.raw_script_pubkey = _io.read(io.read_varint)
+          obj.script_pubkey = Script.parse io
         end
       end
 
-      attr_accessor :amount, :raw_script_pubkey
+      def serialize
+        result = int_to_little_endian(@amount, 8)
+        result += @script_pubkey.serialize
+      end
+
+      attr_accessor :amount, :script_pubkey
     end
 
     def self.parse(_io, _options = {})
@@ -41,12 +75,28 @@ module Bitcoin
       end
     end
 
+    def id
+      HashHelper.hash256(serialize).reverse.unpack('H*')
+    end
+
+    def serialize
+      result = to_bytes(version, 4, 'little')
+      result << encode_varint(ins.size)
+      result << ins.map(&:serialize).join
+      result << encode_varint(outs.size)
+      result << outs.map(&:serialize).join
+      result << to_bytes(locktime, 4, 'little')
+
+      result
+    end
+
     attr_accessor :version, :locktime, :ins, :outs
 
-    def initialize(tx_fetcher: nil)
+    def initialize(tx_fetcher: nil, testnet: false)
       @tx_fetcher = tx_fetcher
       @ins = []
       @outs = []
+      @testnet = testnet
     end
 
     def fee
