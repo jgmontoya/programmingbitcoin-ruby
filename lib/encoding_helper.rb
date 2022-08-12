@@ -10,6 +10,10 @@ module EncodingHelper
     bytes.map.with_index { |byte, index| byte * 256**index }.sum
   end
 
+  def from_hex_to_bytes(hex)
+    [hex.strip].pack("H*")
+  end
+
   def to_bytes(integer, bytes, endianness)
     byte_array = [0] * bytes
     integer.digits(256).each_with_index do |byte, index|
@@ -74,6 +78,12 @@ module EncodingHelper
     return '' if num.zero?
 
     int_to_little_endian(num, 1)
+  end
+
+  def decode_num(string)
+    return 0 if string.empty?
+
+    little_endian_to_int(string)
   end
 
   private

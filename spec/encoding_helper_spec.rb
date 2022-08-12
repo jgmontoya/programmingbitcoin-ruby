@@ -133,4 +133,28 @@ RSpec.describe EncodingHelper do
       end
     end
   end
+
+  describe '#from_hex_to_bytes' do
+    it 'takes an hex string and returns the byte sequence' do
+      expect(described_module.from_hex_to_bytes("A02F")).to eq "\xA0/"
+    end
+  end
+
+  describe '#decode_num' do
+    context 'when string is empty' do
+      let (:str) { '' }
+
+      it 'returns 0' do
+        expect(described_module.decode_num(str)).to eq 0
+      end
+    end
+
+    context 'when string is not empty' do
+      let (:str) { 'A02F' }
+
+      it 'returns the little-endian byte sequence of the string ' do
+        expect(described_module.decode_num(str)).to eq 1177694273
+      end
+    end
+  end
 end
