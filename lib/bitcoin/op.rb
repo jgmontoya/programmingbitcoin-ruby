@@ -1,6 +1,7 @@
 require_relative '../hash_helper'
 require_relative '../encoding_helper'
 require_relative '../ecc/signature'
+require_relative '../ecc/s256_point'
 
 module Bitcoin
   module Op # rubocop:disable Metrics/ModuleLength
@@ -56,6 +57,30 @@ module Bitcoin
 
       stack << (point.verify(z, sig) ? encode_num(1) : encode_num(0))
       true
+    end
+
+    def op_verify(stack)
+      return false if stack.empty?
+
+      element = stack.pop
+
+      !decode_num(element).zero?
+    end
+
+    def op_equal(stack)
+      return false if stack.length < 2
+
+      element1 = stack.pop
+      element2 = stack.pop
+
+      num = element1 == element2 ? encode_num(1) : encode_num(0)
+      stack.append num
+
+      true
+    end
+
+    def op_equalverify(stack)
+      op_equal(stack) && op_verify(stack)
     end
 
     OP_CODE_NAMES = {

@@ -16,6 +16,24 @@ RSpec.describe Bitcoin::Op do
     end
   end
 
+  describe '#op_verify' do
+    context 'when the top element of the stack is an empty string' do
+      it 'returns false' do
+        stack = [1, '']
+
+        expect(described_module.op_verify(stack)).to be false
+      end
+    end
+
+    context 'when the top element of the stack is a nonzero string' do
+      it 'returns true' do
+        stack = [1, ['11'].pack("H*")]
+
+        expect(described_module.op_verify(stack)).to be true
+      end
+    end
+  end
+
   describe '#op_drop' do
     it 'pops the top element of the stack' do
       element1 = ['111111'].pack("H*")
@@ -35,6 +53,45 @@ RSpec.describe Bitcoin::Op do
 
       described_module.op_dup(stack)
       expect(stack).to eq([element1, element2, element2])
+    end
+  end
+
+  describe '#op_equal' do
+    context 'when the top two elements are equal' do
+      it 'pushes a 1 into the stack' do
+        stack = [['11'].pack("H*"), ['11'].pack("H*")]
+        described_module.op_equal(stack)
+
+        expect(stack).to eq(["\x01"])
+      end
+    end
+
+    context 'when the top two elements are not equal' do
+      it 'pushes an empty string into the stack' do
+        stack = [['11'].pack("H*"), ['22'].pack("H*")]
+        described_module.op_equal(stack)
+
+        expect(stack).to eq([""])
+      end
+    end
+  end
+
+  describe '#op_equalverify' do
+    context 'when the top two elements are equal' do
+      it 'returns true' do
+        element = ['11'].pack("H*")
+        stack = [element, element]
+
+        expect(described_module.op_equalverify(stack)).to be true
+      end
+    end
+
+    context 'when the top two elements are not equal' do
+      it 'returns false' do
+        stack = [['11'].pack("H*"), ['22'].pack("H*")]
+  
+        expect(described_module.op_equalverify(stack)).to be false
+      end
     end
   end
 
