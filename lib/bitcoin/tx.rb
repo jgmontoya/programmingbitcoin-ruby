@@ -34,6 +34,17 @@ module Bitcoin
         new(prev_tx, prev_index, script_sig, sequence)
       end
 
+      def fetch_tx(testnet: false)
+        tx_id = prev_tx.unpack1('H*')
+
+        TxFetcher.fetch tx_id, testnet: testnet
+      end
+
+      def script_pubkey(testnet: false)
+        tx = fetch_tx testnet: testnet
+        tx.outs[prev_index].script_pubkey
+      end
+
       def serialize
         result = prev_tx.reverse
         result << to_bytes(prev_index, 4, 'little')
@@ -62,6 +73,31 @@ module Bitcoin
       end
 
       attr_accessor :amount, :script_pubkey
+    end
+
+    class TxFetcher
+      extend EncodingHelper
+
+      def self.base_url(testnet: false)
+        testnet ? 'https://blockstream.info/testnet/api' : 'https://blockstream.info/api'
+      end
+
+      def self.fetch(tx_id, testnet: false)
+        url = URI("#{base_url(testnet: testnet)}/tx/#{tx_id}/hex")
+        res = Net::HTTP.get(url)
+        raw = from_hex_to_bytes(res)
+        if raw[4] == "\x00"
+          raw = raw[...4] + raw[6...]
+          tx = Tx.parse(StringIO.new(raw), testnet: testnet)
+          tx.locktime = from_bytes(raw[-4...], 'little')
+        else
+          tx = Tx.parse(StringIO.new(raw), testnet: testnet)
+        end
+
+        raise "not the same id: #{tx.id.first} vs #{tx_id}" if tx.id.first != tx_id
+
+        tx
+      end
     end
 
     def self.parse(_io, _options = {})
@@ -101,6 +137,68 @@ module Bitcoin
 
     def fee
       @fee ||= calculate_fee
+    end
+
+    def sig_hash(input_index)
+      result = int_to_little_endian version, 4
+      result << encode_varint(ins.size)
+
+      ins.each_with_index do |input, index|
+        if index == input_index
+          result << TxIn.new(
+            input.prev_tx,
+            input.prev_index,
+            input.script_pubkey(testnet: @testnet),
+            input.sequence
+          ).serialize
+        else
+          result << TxIn.new(
+            input.prev_tx,
+            input.prev_index,
+            nil,
+            input.sequence
+          ).serialize
+        end
+      end
+
+      result << encode_varint(outs.size)
+      outs.each do |output|
+        result << output.serialize
+      end
+
+      result << int_to_little_endian(locktime, 4)
+      result << int_to_little_endian(SIGHASH_ALL, 4)
+      hash256 = HashHelper.hash256 result
+
+      from_bytes hash256, 'big'
+    end
+
+    def verify_input(input_index)
+      tx_in = ins[input_index]
+      script_pubkey = tx_in.script_pubkey testnet: @testnet
+      z = sig_hash(input_index)
+      combined = tx_in.script_sig + script_pubkey
+      combined.evaluate(z)
+    end
+
+    def verify?
+      return false if @fee.negative?
+
+      ins.each_with_index  do |input, index|
+        return false unless verify_input index
+      end
+
+      true
+    end
+
+    def sign_input(input_index, private_key)
+      z = sig_hash(input_index)
+      der = private_key.sign(z).der
+      sig = der + to_bytes(SIGHASH_ALL, 1, 'big')
+      sec = private_key.point.sec()
+      ins[input_index].script_sig = Script.new([sig, sec])
+
+      verify_input(input_index)
     end
 
     private
