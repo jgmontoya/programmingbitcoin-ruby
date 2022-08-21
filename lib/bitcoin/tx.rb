@@ -1,6 +1,7 @@
 require_relative '../bitcoin_data_io'
 require_relative '../encoding_helper'
 require_relative '../hash_helper'
+require_relative './fetcher/uri_fetcher'
 require_relative 'script'
 require 'net/http'
 require 'uri'
@@ -16,11 +17,12 @@ module Bitcoin
     class TxIn
       include EncodingHelper
 
-      def initialize(prev_tx, prev_index, script_sig=nil, sequence=0xffffffff)
+      def initialize(prev_tx, prev_index, script_sig = nil, sequence = 0xffffffff)
         @prev_tx = prev_tx
         @prev_index = prev_index
         @script_sig = script_sig || Script.new
         @sequence = sequence
+        @tx_fetcher = UriFetcher.new
       end
 
       def self.parse(_io)
@@ -37,7 +39,7 @@ module Bitcoin
       def fetch_tx(testnet: false)
         tx_id = prev_tx.unpack1('H*')
 
-        TxFetcher.fetch tx_id, testnet: testnet
+        @tx_fetcher.fetch tx_id, testnet: testnet
       end
 
       def script_pubkey(testnet: false)
@@ -73,31 +75,6 @@ module Bitcoin
       end
 
       attr_accessor :amount, :script_pubkey
-    end
-
-    class TxFetcher
-      extend EncodingHelper
-
-      def self.base_url(testnet: false)
-        testnet ? 'https://blockstream.info/testnet/api' : 'https://blockstream.info/api'
-      end
-
-      def self.fetch(tx_id, testnet: false)
-        url = URI("#{base_url(testnet: testnet)}/tx/#{tx_id}/hex")
-        res = Net::HTTP.get(url)
-        raw = from_hex_to_bytes(res)
-        if raw[4] == "\x00"
-          raw = raw[...4] + raw[6...]
-          tx = Tx.parse(StringIO.new(raw), testnet: testnet)
-          tx.locktime = from_bytes(raw[-4...], 'little')
-        else
-          tx = Tx.parse(StringIO.new(raw), testnet: testnet)
-        end
-
-        raise "not the same id: #{tx.id.first} vs #{tx_id}" if tx.id.first != tx_id
-
-        tx
-      end
     end
 
     def self.parse(_io, _options = {})
