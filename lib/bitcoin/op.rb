@@ -1,11 +1,13 @@
 require_relative '../hash_helper'
 require_relative '../encoding_helper'
+require_relative '../script_helper'
 require_relative '../ecc/signature'
 require_relative '../ecc/s256_point'
 
 module Bitcoin
   module Op # rubocop:disable Metrics/ModuleLength
     include EncodingHelper
+    include ScriptHelper
 
     def op_0(stack)
       stack << encode_num(0)

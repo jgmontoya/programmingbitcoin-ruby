@@ -1,4 +1,5 @@
 # encoding: ascii-8bit
+
 require_relative 'hash_helper'
 
 module EncodingHelper
@@ -46,7 +47,7 @@ module EncodingHelper
     message = combined.slice(0, combined.length - 4)
     computed_hash = HashHelper.hash256(message).slice(0, 4)
     if computed_hash != checksum
-      raise  StandardError.new "bad address: #{checksum} #{computed_hash}"
+      raise StandardError.new "bad address: #{checksum} #{computed_hash}"
     end
 
     message
@@ -72,18 +73,6 @@ module EncodingHelper
     else
       raise EncodingError.new("integer too large: #{integer}")
     end
-  end
-
-  def encode_num(num)
-    return '' if num.zero?
-
-    int_to_little_endian(num, 1)
-  end
-
-  def decode_num(string)
-    return 0 if string.empty?
-
-    little_endian_to_int(string)
   end
 
   private

@@ -89,7 +89,7 @@ RSpec.describe Bitcoin::Op do
     context 'when the top two elements are not equal' do
       it 'returns false' do
         stack = [['11'].pack("H*"), ['22'].pack("H*")]
-  
+
         expect(described_module.op_equalverify(stack)).to be false
       end
     end
@@ -217,7 +217,6 @@ RSpec.describe Bitcoin::Op do
   xdescribe '#op_notif' do it 'performs op_notif correctly' end
   xdescribe '#op_else' do it 'performs op_else correctly' end
   xdescribe '#op_endif' do it 'performs op_endif correctly' end
-  xdescribe '#op_verify' do it 'performs op_verify correctly' end
   xdescribe '#op_return' do it 'performs op_return correctly' end
   xdescribe '#op_toaltstack' do it 'performs op_toaltstack correctly' end
   xdescribe '#op_fromaltstack' do it 'performs op_fromaltstack correctly' end
@@ -237,8 +236,6 @@ RSpec.describe Bitcoin::Op do
   xdescribe '#op_swap' do it 'performs op_swap correctly' end
   xdescribe '#op_tuck' do it 'performs op_tuck correctly' end
   xdescribe '#op_size' do it 'performs op_size correctly' end
-  xdescribe '#op_equal' do it 'performs op_equal correctly' end
-  xdescribe '#op_equalverify' do it 'performs op_equalverify correctly' end
   xdescribe '#op_1add' do it 'performs op_1add correctly' end
   xdescribe '#op_1sub' do it 'performs op_1sub correctly' end
   xdescribe '#op_negate' do it 'performs op_negate correctly' end
