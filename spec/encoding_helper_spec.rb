@@ -116,21 +116,9 @@ RSpec.describe EncodingHelper do
     end
   end
 
-  describe '#encode_num' do
-    context 'when the number is 0' do
-      let(:num) { 0 }
-
-      it 'returns an empty string' do
-        expect(described_module.encode_num(num)).to eq ""
-      end
-    end
-
-    context 'when the number is not 0' do
-      let(:num) { 7 }
-
-      it 'returns the number as a single byte' do
-        expect(described_module.encode_num(num)).to eq "\x07"
-      end
+  describe '#from_hex_to_bytes' do
+    it 'takes an hex string and returns the byte sequence' do
+      expect(described_module.from_hex_to_bytes("A02F")).to eq "\xA0/"
     end
   end
 end
