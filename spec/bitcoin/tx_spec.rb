@@ -1,5 +1,6 @@
 require 'bitcoin/tx'
 require_relative '../support/fixture_macros'
+require_relative '../../lib/ecc/private_key'
 
 RSpec.describe Bitcoin::Tx do
   load_transaction_set 'transactions'
@@ -29,7 +30,7 @@ fe55f3deb369fe5d9280cb1a01793f81"
     end
 
     it "properly parses each input script_sig" do
-      expect(bytes_to_hex(parse(raw_tx).ins.first.raw_script_sig)).to eq "483045022100ed81ff192e75a\
+      expect(bytes_to_hex(parse(raw_tx).ins.first.script_sig.serialize)).to eq "6b483045022100ed81ff192e75a\
 3fd2304004dcadb746fa5e24c5031ccfcf21320b0277457c98f02207a986d955c6e0cb35d446a89d3f56100f4d7f67801c3\
 1967743a9c8e10615bed01210349fc4e631e3624a545de3f89f5d8684c7b8138bd94bdd531d2e213bf016b278a"
     end
@@ -47,10 +48,10 @@ fe55f3deb369fe5d9280cb1a01793f81"
     end
 
     it "properly parses each output script_pubkey" do
-      expect(parse(raw_tx).outs.map { |o| bytes_to_hex(o.raw_script_pubkey) }).to eq(
+      expect(parse(raw_tx).outs.map { |o| bytes_to_hex(o.script_pubkey.serialize) }).to eq(
         [
-          '76a914bc3b654dca7e56b04dca18f2566cdaf02e8d9ada88ac',
-          '76a9141c4bc762dd5423e332166702cb75f40df79fea1288ac'
+          '1976a914bc3b654dca7e56b04dca18f2566cdaf02e8d9ada88ac',
+          '1976a9141c4bc762dd5423e332166702cb75f40df79fea1288ac'
         ]
       )
     end
@@ -95,5 +96,45 @@ a9143c82d7df364eb6c75be8c80df2b3eda8db57397088ac46430600"
 
   def bytes_to_hex(_bytes)
     _bytes.unpack1("H*")
+  end
+
+  describe '#sig_hash' do
+    let(:tx) { described_class.parse raw_tx, tx_fetcher: tx_fetcher }
+    let(:raw_tx) do
+      hex_to_byte_stream(
+        "0100000001813f79011acb80925dfe69b3def355fe914bd1d96a3f5f71bf8303c6a989c7d1000000006b483045022100ed81ff192e75a3fd2304004dcadb746fa5e24c5031ccfcf21320b0277457c98f02207a986d955c6e0cb35d446a89d3f56100f4d7f67801c31967743a9c8e10615bed01210349fc4e631e3624a545de3f89f5d8684c7b8138bd94bdd531d2e213bf016b278afeffffff02a135ef01000000001976a914bc3b654dca7e56b04dca18f2566cdaf02e8d9ada88ac99c39800000000001976a9141c4bc762dd5423e332166702cb75f40df79fea1288ac19430600"
+      )
+    end
+
+    it 'returns the correct sig_hash' do
+      expect(tx.sig_hash(0)).to eq 18037338614366229343027734445863508930887653120159589908930024158807354868134
+    end
+  end
+
+  describe '#verify_input' do
+    let(:tx) { described_class.parse raw_tx, tx_fetcher: tx_fetcher }
+    let(:raw_tx) do
+      hex_to_byte_stream(
+        "0100000001813f79011acb80925dfe69b3def355fe914bd1d96a3f5f71bf8303c6a989c7d1000000006b483045022100ed81ff192e75a3fd2304004dcadb746fa5e24c5031ccfcf21320b0277457c98f02207a986d955c6e0cb35d446a89d3f56100f4d7f67801c31967743a9c8e10615bed01210349fc4e631e3624a545de3f89f5d8684c7b8138bd94bdd531d2e213bf016b278afeffffff02a135ef01000000001976a914bc3b654dca7e56b04dca18f2566cdaf02e8d9ada88ac99c39800000000001976a9141c4bc762dd5423e332166702cb75f40df79fea1288ac19430600"
+      )
+    end
+
+    it 'verifies unlocking script unlocks the script' do
+      expect(tx.verify_input(0)).to be true
+    end
+  end
+
+  describe '#sign_input' do
+    let(:tx) { described_class.parse raw_tx, tx_fetcher: tx_fetcher, testnet: true }
+    let(:raw_tx) do
+      hex_to_byte_stream(
+        "010000000199a24308080ab26e6fb65c4eccfadf76749bb5bfa8cb08f291320b3c21e56f0d0d00000000ffffffff02408af701000000001976a914d52ad7ca9b3d096a38e752c2018e6fbc40cdf26f88ac80969800000000001976a914507b27411ccf7f16f10297de6cef3f291623eddf88ac00000000"
+      )
+    end
+    let(:private_key) { ECC::PrivateKey.new(8675309) }
+
+    it 'signs the input' do
+      expect(tx.sign_input(0, private_key)).to be true
+    end
   end
 end

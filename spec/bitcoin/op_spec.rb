@@ -16,6 +16,24 @@ RSpec.describe Bitcoin::Op do
     end
   end
 
+  describe '#op_verify' do
+    context 'when the top element of the stack is an empty string' do
+      it 'returns false' do
+        stack = [1, '']
+
+        expect(described_module.op_verify(stack)).to be false
+      end
+    end
+
+    context 'when the top element of the stack is a nonzero string' do
+      it 'returns true' do
+        stack = [1, ['11'].pack("H*")]
+
+        expect(described_module.op_verify(stack)).to be true
+      end
+    end
+  end
+
   describe '#op_drop' do
     it 'pops the top element of the stack' do
       element1 = ['111111'].pack("H*")
@@ -35,6 +53,45 @@ RSpec.describe Bitcoin::Op do
 
       described_module.op_dup(stack)
       expect(stack).to eq([element1, element2, element2])
+    end
+  end
+
+  describe '#op_equal' do
+    context 'when the top two elements are equal' do
+      it 'pushes a 1 into the stack' do
+        stack = [['11'].pack("H*"), ['11'].pack("H*")]
+        described_module.op_equal(stack)
+
+        expect(stack).to eq(["\x01"])
+      end
+    end
+
+    context 'when the top two elements are not equal' do
+      it 'pushes an empty string into the stack' do
+        stack = [['11'].pack("H*"), ['22'].pack("H*")]
+        described_module.op_equal(stack)
+
+        expect(stack).to eq([""])
+      end
+    end
+  end
+
+  describe '#op_equalverify' do
+    context 'when the top two elements are equal' do
+      it 'returns true' do
+        element = ['11'].pack("H*")
+        stack = [element, element]
+
+        expect(described_module.op_equalverify(stack)).to be true
+      end
+    end
+
+    context 'when the top two elements are not equal' do
+      it 'returns false' do
+        stack = [['11'].pack("H*"), ['22'].pack("H*")]
+
+        expect(described_module.op_equalverify(stack)).to be false
+      end
     end
   end
 
@@ -160,7 +217,6 @@ RSpec.describe Bitcoin::Op do
   xdescribe '#op_notif' do it 'performs op_notif correctly' end
   xdescribe '#op_else' do it 'performs op_else correctly' end
   xdescribe '#op_endif' do it 'performs op_endif correctly' end
-  xdescribe '#op_verify' do it 'performs op_verify correctly' end
   xdescribe '#op_return' do it 'performs op_return correctly' end
   xdescribe '#op_toaltstack' do it 'performs op_toaltstack correctly' end
   xdescribe '#op_fromaltstack' do it 'performs op_fromaltstack correctly' end
@@ -180,8 +236,6 @@ RSpec.describe Bitcoin::Op do
   xdescribe '#op_swap' do it 'performs op_swap correctly' end
   xdescribe '#op_tuck' do it 'performs op_tuck correctly' end
   xdescribe '#op_size' do it 'performs op_size correctly' end
-  xdescribe '#op_equal' do it 'performs op_equal correctly' end
-  xdescribe '#op_equalverify' do it 'performs op_equalverify correctly' end
   xdescribe '#op_1add' do it 'performs op_1add correctly' end
   xdescribe '#op_1sub' do it 'performs op_1sub correctly' end
   xdescribe '#op_negate' do it 'performs op_negate correctly' end
