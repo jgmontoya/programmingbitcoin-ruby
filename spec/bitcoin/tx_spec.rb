@@ -187,4 +187,35 @@ ffff02408af701000000001976a914d52ad7ca9b3d096a38e752c2018e6fbc40cdf26f88ac809698
       it { expect(tx.coinbase?).to be false }
     end
   end
+
+  describe '#coinbase_height' do
+    let(:tx) { described_class.parse raw_tx }
+
+    context 'when tx is not coinbase' do
+      let(:raw_tx) do
+        hex_to_byte_stream(
+          "010000000199a24308080ab26e6fb65c4eccfadf76749bb5bfa8cb08f291320b3c21e56f0d0d00000000ffff\
+ffff02408af701000000001976a914d52ad7ca9b3d096a38e752c2018e6fbc40cdf26f88ac80969800000000001976a9145\
+07b27411ccf7f16f10297de6cef3f291623eddf88ac00000000"
+        )
+      end
+
+      it { expect(tx.coinbase_height).to be nil }
+    end
+
+    context 'when tx is coinbase' do
+      let(:raw_tx) do
+        hex_to_byte_stream(
+          "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff5e03d7\
+1b07254d696e656420627920416e74506f6f6c20626a31312f4542312f4144362f43205914293101fabe6d6d678e2c8c34a\
+fc36896e7d9402824ed38e856676ee94bfdb0c6c4bcd8b2e5666a0400000000000000c7270000a5e00e00ffffffff01faf2\
+0b58000000001976a914338c84849423992471bffb1a54a8d9b1d69dc28a88ac00000000"
+        )
+      end
+
+      it 'returns the block height' do
+        expect(tx.coinbase_height).to be 465879
+      end
+    end
+  end
 end

@@ -172,6 +172,13 @@ module Bitcoin
       tx_in.prev_index == 0xffffffff
     end
 
+    def coinbase_height
+      return nil unless coinbase?
+
+      first_cmd = ins[0].script_sig.cmds[0]
+      little_endian_to_int(first_cmd)
+    end
+
     private
 
     def encode_ins(input_index, redeem_script)
