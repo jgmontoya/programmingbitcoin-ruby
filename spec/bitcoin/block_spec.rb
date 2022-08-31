@@ -97,4 +97,12 @@ RSpec.describe Bitcoin::Block do
       it { expect(block_header.bip141?).to eq false }
     end
   end
+
+  describe '#target' do
+    it { expect(block_header.target).to eq 0x13ce9000000000000000000000000000000000000000000 }
+  end
+
+  describe '#difficulty' do
+    it { expect(block_header.difficulty).to eq 888171856257 }
+  end
 end

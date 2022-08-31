@@ -55,5 +55,15 @@ module Bitcoin
     def bip141?
       (version >> 1) & 1 == 1
     end
+
+    def target
+      exponent = little_endian_to_int(bits[-1])
+      coefficient = little_endian_to_int(bits[0...-1])
+      coefficient * 256**(exponent - 3)
+    end
+
+    def difficulty
+      0xffff00000000000000000000000000002e8000000000000000000000 / target
+    end
   end
 end
