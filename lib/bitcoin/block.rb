@@ -43,5 +43,17 @@ module Bitcoin
     def hash
       HashHelper.hash256(serialize).reverse
     end
+
+    def bip9?
+      version >> 29 == 0b001
+    end
+
+    def bip91?
+      (version >> 4) & 1 == 1
+    end
+
+    def bip141?
+      (version >> 1) & 1 == 1
+    end
   end
 end

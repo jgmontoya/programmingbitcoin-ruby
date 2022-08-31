@@ -61,4 +61,40 @@ RSpec.describe Bitcoin::Block do
 
     it { expect(block_header.hash).to eq from_hex_to_bytes(hex_hash) }
   end
+
+  describe '#bip9?' do
+    context 'with bip9 block' do
+      it { expect(block_header.bip9?).to eq true }
+    end
+
+    context 'with non bip9 block' do
+      before { block_header.version = 0x01000000 }
+
+      it { expect(block_header.bip9?).to eq false }
+    end
+  end
+
+  describe '#bip91?' do
+    context 'with non bip91 block' do
+      it { expect(block_header.bip91?).to eq false }
+    end
+
+    context 'with bip91 block' do
+      before { block_header.version = 0x01000010 }
+
+      it { expect(block_header.bip91?).to eq true }
+    end
+  end
+
+  describe '#bip141?' do
+    context 'with bip141 block' do
+      it { expect(block_header.bip141?).to eq true }
+    end
+
+    context 'with non bip141 block' do
+      before { block_header.version = 0x01000000 }
+
+      it { expect(block_header.bip141?).to eq false }
+    end
+  end
 end
