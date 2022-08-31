@@ -55,4 +55,10 @@ RSpec.describe Bitcoin::Block do
   describe '#serialize' do
     it { expect(block_header.serialize).to eq raw_block_header }
   end
+
+  describe '#hash' do
+    let(:hex_hash) { '0000000000000000007e9e4c586439b0cdbe13b1370bdd9435d76a644d047523' }
+
+    it { expect(block_header.hash).to eq from_hex_to_bytes(hex_hash) }
+  end
 end

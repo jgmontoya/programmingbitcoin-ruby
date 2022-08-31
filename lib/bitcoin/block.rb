@@ -1,5 +1,6 @@
 require_relative '../bitcoin_data_io'
 require_relative '../encoding_helper'
+require_relative '../hash_helper'
 
 module Bitcoin
   class Block
@@ -37,6 +38,10 @@ module Bitcoin
       result << to_bytes(timestamp, 4, 'little')
       result << bits
       result << nonce
+    end
+
+    def hash
+      HashHelper.hash256(serialize).reverse
     end
   end
 end
