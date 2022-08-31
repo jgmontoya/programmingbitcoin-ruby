@@ -29,5 +29,14 @@ module Bitcoin
 
       new(version, prev_block, merkle_root, timestamp, bits, nonce)
     end
+
+    def serialize
+      result = to_bytes(version, 4, 'little')
+      result << prev_block.reverse
+      result << merkle_root.reverse
+      result << to_bytes(timestamp, 4, 'little')
+      result << bits
+      result << nonce
+    end
   end
 end
