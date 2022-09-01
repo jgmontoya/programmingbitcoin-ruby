@@ -7,6 +7,9 @@ module Bitcoin
     include EncodingHelper
     extend EncodingHelper
 
+    MAX_TARGET = 0xffff * 256**(0x1d - 3)
+    TWO_WEEKS = 60 * 60 * 24 * 14
+
     def initialize(version, prev_block, merkle_root, timestamp, bits, nonce)
       @version = version
       @prev_block = prev_block
@@ -43,6 +46,26 @@ module Bitcoin
       coefficient.reverse + to_bytes(exponent, 1, 'little')
     end
 
+    def self.bits_to_target(bits)
+      exponent = little_endian_to_int(bits[-1])
+      coefficient = little_endian_to_int(bits[0...-1])
+      coefficient * 256**(exponent - 3)
+    end
+
+    def self.calculate_new_bits(previous_bits, time_differential)
+      max_differential = 4 * TWO_WEEKS
+      time_differential = max_differential if time_differential > max_differential
+
+      min_differential = TWO_WEEKS / 4
+      time_differential = min_differential if time_differential < min_differential
+
+      previous_target = Block.bits_to_target(previous_bits)
+      new_target = previous_target * time_differential / TWO_WEEKS
+
+      new_target = MAX_TARGET if new_target > MAX_TARGET
+      Block.target_to_bits(new_target)
+    end
+
     def serialize
       result = to_bytes(version, 4, 'little')
       result << prev_block.reverse
@@ -69,13 +92,11 @@ module Bitcoin
     end
 
     def target
-      exponent = little_endian_to_int(bits[-1])
-      coefficient = little_endian_to_int(bits[0...-1])
-      coefficient * 256**(exponent - 3)
+      Block.bits_to_target(bits)
     end
 
     def difficulty
-      0xffff00000000000000000000000000002e8000000000000000000000 / target
+      MAX_TARGET / target
     end
 
     def pow_valid?

@@ -59,6 +59,20 @@ RSpec.describe Bitcoin::Block do
     end
   end
 
+  describe '#self.bits_to_target' do
+    it 'computes the target for the given bits' do
+      expect(described_class.bits_to_target(block_header.bits))
+        .to eq 0x13ce9000000000000000000000000000000000000000000
+    end
+  end
+
+  describe '#self.calculate_new_bits' do
+    it 'computes the new bits 2016-block time differential and the previous bits' do
+      expect(described_class.calculate_new_bits(from_hex_to_bytes('54d80118'), 302400))
+        .to eq from_hex_to_bytes('00157617')
+    end
+  end
+
   describe '#serialize' do
     it { expect(block_header.serialize).to eq raw_block_header }
   end
