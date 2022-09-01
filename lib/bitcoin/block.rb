@@ -65,5 +65,10 @@ module Bitcoin
     def difficulty
       0xffff00000000000000000000000000002e8000000000000000000000 / target
     end
+
+    def pow_valid?
+      block_header_hash = HashHelper.hash256(serialize)
+      little_endian_to_int(block_header_hash) < target
+    end
   end
 end

@@ -22,7 +22,7 @@ RSpec.describe Bitcoin::Block do
     )
   end
 
-  describe '#parse' do
+  describe '#self.parse' do
     def parse(*args)
       described_class.parse(StringIO.new(*args))
     end
@@ -104,5 +104,17 @@ RSpec.describe Bitcoin::Block do
 
   describe '#difficulty' do
     it { expect(block_header.difficulty).to eq 888171856257 }
+  end
+
+  describe '#pow_valid?' do
+    context 'with valid PoW' do
+      it { expect(block_header.pow_valid?).to eq true }
+    end
+
+    context 'with invalid PoW' do
+      before { block_header.nonce = from_hex_to_bytes('00000000') }
+
+      it { expect(block_header.pow_valid?).to eq false }
+    end
   end
 end
