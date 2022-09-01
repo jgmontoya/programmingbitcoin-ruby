@@ -52,6 +52,13 @@ RSpec.describe Bitcoin::Block do
     end
   end
 
+  describe '#self.target_to_bits' do
+    it 'returns a target integer back into bits' do
+      expect(described_class.target_to_bits(0x13ce9000000000000000000000000000000000000000000))
+        .to eq from_hex_to_bytes('e93c0118')
+    end
+  end
+
   describe '#serialize' do
     it { expect(block_header.serialize).to eq raw_block_header }
   end

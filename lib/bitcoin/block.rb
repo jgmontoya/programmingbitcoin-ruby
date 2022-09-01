@@ -31,6 +31,18 @@ module Bitcoin
       new(version, prev_block, merkle_root, timestamp, bits, nonce)
     end
 
+    def self.target_to_bits(target)
+      raw_bytes = to_bytes(target, 32, 'big').sub(/^\x00*/, "")
+      if little_endian_to_int(raw_bytes[0]) > 0x7f
+        exponent = raw_bytes.length + 1
+        coefficient = "x\00#{raw_bytes[0...2]}"
+      else
+        exponent = raw_bytes.length
+        coefficient = raw_bytes[0...3]
+      end
+      coefficient.reverse + to_bytes(exponent, 1, 'little')
+    end
+
     def serialize
       result = to_bytes(version, 4, 'little')
       result << prev_block.reverse
