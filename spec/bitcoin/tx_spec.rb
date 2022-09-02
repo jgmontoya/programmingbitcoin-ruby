@@ -122,6 +122,16 @@ a9143c82d7df364eb6c75be8c80df2b3eda8db57397088ac46430600"
     it 'verifies unlocking script unlocks the script' do
       expect(tx.verify_input(0)).to be true
     end
+
+    context 'when the script pubkey is p2sh' do
+      let(:raw_tx) do
+        resolve_tx '46df1a9484d0a81d03ce0ee543ab6e1a23ed06175c104a178268fad381216c2b'
+      end
+
+      it 'verifies unlocking script unlocks the script' do
+        expect(tx.verify_input(0)).to be true
+      end
+    end
   end
 
   describe '#sign_input' do

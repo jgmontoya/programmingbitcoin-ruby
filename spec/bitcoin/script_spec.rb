@@ -146,6 +146,80 @@ RSpec.describe Bitcoin::Script do
         expect(script.evaluate(0x1111)).to be true
       end
     end
+
+    context "when the script matches the p2sh pattern" do
+      let(:redeem_script) { "" }
+      let(:redeem_script_hash160) { HashHelper.hash160(redeem_script) }
+      let(:commands) do
+        [
+          redeem_script,
+          169,
+          redeem_script_hash160,
+          135
+        ]
+      end
+
+      context "when the script finishes with a nonzero top element" do
+        let(:redeem_script) { "\x51" }
+
+        it "returns true" do
+          expect(script.evaluate(0x1111)).to be true
+        end
+      end
+
+      context "when the script finishes with an empty string as top element" do
+        let(:redeem_script) { "\x00" }
+
+        it "returns false" do
+          expect(script.evaluate(0x1111)).to be false
+        end
+      end
+
+      context "when the script hash does not match the given hash160" do
+        let(:redeem_script) { "\x51" }
+        let(:redeem_script_hash160) { HashHelper.hash160("\x01") }
+
+        it "returns false" do
+          expect(script.evaluate(0x1111)).to be false
+        end
+      end
+    end
+  end
+
+  describe '#p2sh?' do
+    let!(:script) { described_class.new(commands) }
+    let(:commands) { [] }
+
+    context "when the script matches the p2sh pattern" do
+      let(:redeem_script_hash160) { HashHelper.hash160('') }
+      let(:commands) do
+        [
+          169,
+          redeem_script_hash160,
+          135
+        ]
+      end
+      let!(:script) { described_class.new(commands) }
+
+      it 'returns true' do
+        expect(script.p2sh?).to be true
+      end
+    end
+
+    context "when the script does not match the p2sh pattern" do
+      let(:commands) do
+        [
+          '',
+          18,
+          135
+        ]
+      end
+      let!(:script) { described_class.new(commands) }
+
+      it 'returns false' do
+        expect(script.p2sh?).to be false
+      end
+    end
   end
 
   describe "#+" do
