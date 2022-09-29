@@ -9,9 +9,11 @@ module Bitcoin
     include EncodingHelper
     include ScriptHelper
 
-    def op_0(stack)
-      stack << encode_num(0)
-      true
+    (0..16).each do |num|
+      define_method :"op_#{num}" do |stack|
+        stack << encode_num(num)
+        true
+      end
     end
 
     def op_drop(stack)
@@ -44,7 +46,7 @@ module Bitcoin
       true
     end
 
-    def op_checksig(stack, z)
+    def op_checksig(stack, z) # rubocop:disable Naming/MethodParameterName
       return false if stack.length < 2
 
       sec_pubkey = stack.pop
@@ -83,6 +85,49 @@ module Bitcoin
 
     def op_equalverify(stack)
       op_equal(stack) && op_verify(stack)
+    end
+
+    def op_checkmultisig(stack, z) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Naming/MethodParameterName
+      return false if stack.empty?
+
+      n = decode_num(stack.pop)
+      return false if stack.length < n + 1
+
+      sec_pubkeys = []
+      n.times { sec_pubkeys << stack.pop }
+
+      m = decode_num(stack.pop)
+      return false if stack.length < m + 1
+
+      der_signatures = []
+      m.times { der_signatures << stack.pop[0...-1] }
+
+      stack.pop
+
+      begin
+        points = sec_pubkeys.map { |sec| ECC::S256Point.parse(sec) }
+        sigs = der_signatures.map { |der| ECC::Signature.parse(der) }
+
+        sigs_to_verify = m
+        sigs.each do |sig|
+          return false if points.empty?
+
+          while points.any?
+            point = points.shift
+            if point.verify(z, sig)
+              sigs_to_verify -= 1
+              break
+            end
+          end
+          return false if sigs_to_verify > points.length
+        end
+
+        stack.append(encode_num(1))
+      rescue SyntaxError, ECC::SignatureError
+        return false
+      end
+
+      true
     end
 
     OP_CODE_NAMES = {

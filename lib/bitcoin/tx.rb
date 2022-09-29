@@ -70,8 +70,7 @@ module Bitcoin
       end
 
       def serialize
-        result = int_to_little_endian(@amount, 8)
-        result += @script_pubkey.serialize
+        int_to_little_endian(@amount, 8) + @script_pubkey.serialize
       end
 
       attr_accessor :amount, :script_pubkey
@@ -116,35 +115,13 @@ module Bitcoin
       @fee ||= calculate_fee
     end
 
-    def sig_hash(input_index)
-      result = int_to_little_endian version, 4
-      result << encode_varint(ins.size)
-
-      ins.each_with_index do |input, index|
-        if index == input_index
-          result << TxIn.new(
-            input.prev_tx,
-            input.prev_index,
-            input.script_pubkey(testnet: @testnet),
-            input.sequence
-          ).serialize
-        else
-          result << TxIn.new(
-            input.prev_tx,
-            input.prev_index,
-            nil,
-            input.sequence
-          ).serialize
-        end
-      end
-
-      result << encode_varint(outs.size)
-      outs.each do |output|
-        result << output.serialize
-      end
-
+    def sig_hash(input_index, redeem_script = nil)
+      result = int_to_little_endian(version, 4)
+      result << encode_ins(input_index, redeem_script)
+      result << encode_outs
       result << int_to_little_endian(locktime, 4)
       result << int_to_little_endian(SIGHASH_ALL, 4)
+
       hash256 = HashHelper.hash256 result
 
       from_bytes hash256, 'big'
@@ -153,7 +130,15 @@ module Bitcoin
     def verify_input(input_index)
       tx_in = ins[input_index]
       script_pubkey = tx_in.script_pubkey testnet: @testnet
-      z = sig_hash(input_index)
+
+      if script_pubkey.p2sh?
+        cmd = tx_in.script_sig.cmds[-1]
+        raw_redeem = encode_varint(cmd.length) + cmd
+        redeem_script = Script.parse(StringIO.new(raw_redeem))
+      else
+        redeem_script = nil
+      end
+      z = sig_hash(input_index, redeem_script)
       combined = tx_in.script_sig + script_pubkey
       combined.evaluate(z)
     end
@@ -161,7 +146,7 @@ module Bitcoin
     def verify?
       return false if @fee.negative?
 
-      ins.each_with_index  do |input, index|
+      ins.each_with_index do |_, index|
         return false unless verify_input index
       end
 
@@ -178,7 +163,46 @@ module Bitcoin
       verify_input(input_index)
     end
 
+    def coinbase?
+      return false unless ins.size == 1
+
+      tx_in = ins.first
+      return false unless tx_in.prev_tx == "\x00" * 32
+
+      tx_in.prev_index == 0xffffffff
+    end
+
+    def coinbase_height
+      return nil unless coinbase?
+
+      first_cmd = ins[0].script_sig.cmds[0]
+      little_endian_to_int(first_cmd)
+    end
+
     private
+
+    def encode_ins(input_index, redeem_script)
+      result = encode_varint(ins.size)
+
+      ins.each_with_index do |input, index|
+        script_sig = if index == input_index
+                       redeem_script || input.script_pubkey(testnet: @testnet)
+                     end
+
+        result << TxIn.new(
+          input.prev_tx,
+          input.prev_index,
+          script_sig,
+          input.sequence
+        ).serialize
+      end
+
+      result
+    end
+
+    def encode_outs
+      encode_varint(outs.size) + outs.map(&:serialize).join
+    end
 
     def calculate_fee
       raise 'transaction fetcher not provided' if @tx_fetcher.nil?
