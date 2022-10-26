@@ -28,6 +28,17 @@ module EncodingHelper
     _bytes.unpack1("H*")
   end
 
+  def bytes_to_bit_field(_bytes)
+    bit_field = []
+    _bytes.each_byte do |byte|
+      8.times do
+        bit_field << (byte & 1)
+        byte >>= 1
+      end
+    end
+    bit_field
+  end
+
   def encode_base58(bytes)
     zero_prefix_length = 0
     bytes.each_char { |char| char == "\x00" ? zero_prefix_length += 1 : break }
