@@ -1,6 +1,7 @@
 require_relative '../bitcoin_data_io'
 require_relative '../encoding_helper'
 require_relative '../hash_helper'
+require_relative '../merkle_helper'
 
 module Bitcoin
   class Block
@@ -14,16 +15,17 @@ module Bitcoin
     MAX_TARGET = 0xffff * 256**(0x1d - 3)
     TWO_WEEKS = 60 * 60 * 24 * 14
 
-    def initialize(version, prev_block, merkle_root, timestamp, bits, nonce)
+    def initialize(version, prev_block, merkle_root, timestamp, bits, nonce, tx_hashes: nil)
       @version = version
       @prev_block = prev_block
       @merkle_root = merkle_root
       @timestamp = timestamp
       @bits = bits
       @nonce = nonce
+      @tx_hashes = tx_hashes
     end
 
-    attr_accessor :version, :prev_block, :merkle_root, :timestamp, :bits, :nonce
+    attr_accessor :version, :prev_block, :merkle_root, :timestamp, :bits, :nonce, :tx_hashes
 
     def self.parse(io)
       io = BitcoinDataIO(io)
@@ -106,6 +108,13 @@ module Bitcoin
     def pow_valid?
       block_header_hash = HashHelper.hash256(serialize)
       little_endian_to_int(block_header_hash) < target
+    end
+
+    def merkle_root_valid?
+      hashes = @tx_hashes.map(&:reverse)
+      computed_root = MerkleHelper.merkle_root(hashes)
+
+      computed_root.reverse == @merkle_root
     end
   end
 end
