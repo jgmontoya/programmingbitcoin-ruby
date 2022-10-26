@@ -24,6 +24,10 @@ module EncodingHelper
     byte_array.pack('c*')
   end
 
+  def bytes_to_hex(_bytes)
+    _bytes.unpack1("H*")
+  end
+
   def encode_base58(bytes)
     zero_prefix_length = 0
     bytes.each_char { |char| char == "\x00" ? zero_prefix_length += 1 : break }

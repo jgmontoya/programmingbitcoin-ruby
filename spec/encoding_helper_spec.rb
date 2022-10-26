@@ -32,6 +32,13 @@ RSpec.describe EncodingHelper do
     end
   end
 
+  describe '#bytes_to_hex' do
+    it 'converts bytes to a hex string' do
+      bytes = "\x00\x00\x01\xff\x00\x00\x01\xff"
+      expect(described_module.bytes_to_hex(bytes)).to eq "000001ff000001ff"
+    end
+  end
+
   describe '#encode_base58' do
     it 'properly encodes to base 58' do
       base58 = 'vfUSmu3zfEoexnsWT1rSwgbStVv'
