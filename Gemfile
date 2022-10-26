@@ -6,3 +6,4 @@ source "https://rubygems.org"
 
 gem "rspec", "~> 3.11", :groups => [:development, :test]
 gem "pry", :groups => [:development]
+gem 'pry-byebug', :groups => [:development]
