@@ -15,6 +15,10 @@ module EncodingHelper
     [hex.strip].pack("H*")
   end
 
+  def bytes_to_hex(bytes)
+    bytes.unpack1("H*")
+  end
+
   def to_bytes(integer, bytes, endianness)
     byte_array = [0] * bytes
     integer.digits(256).each_with_index do |byte, index|
@@ -59,6 +63,10 @@ module EncodingHelper
 
   def int_to_little_endian(int, length)
     to_bytes(int, length, 'little')
+  end
+
+  def int_to_big_endian(int, length)
+    to_bytes(int, length, 'big')
   end
 
   def encode_varint(integer)
