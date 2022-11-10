@@ -122,7 +122,7 @@ RSpec.describe ECC::S256Point do
     end
   end
 
-  describe '#self.parse' do
+  describe '.parse' do
     it 'returns a Point object from a uncompressed SEC binary' do
       point = ECC::PrivateKey.new(69420).point
       sec_bytes = point.sec(compressed: false)

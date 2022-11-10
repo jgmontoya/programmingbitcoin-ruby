@@ -22,7 +22,7 @@ RSpec.describe Bitcoin::Block do
     )
   end
 
-  describe '#self.parse' do
+  describe '.parse' do
     def parse(*args)
       described_class.parse(StringIO.new(*args))
     end
@@ -52,21 +52,21 @@ RSpec.describe Bitcoin::Block do
     end
   end
 
-  describe '#self.target_to_bits' do
+  describe '.target_to_bits' do
     it 'returns a target integer back into bits' do
       expect(described_class.target_to_bits(0x13ce9000000000000000000000000000000000000000000))
         .to eq from_hex_to_bytes('e93c0118')
     end
   end
 
-  describe '#self.bits_to_target' do
+  describe '.bits_to_target' do
     it 'computes the target for the given bits' do
       expect(described_class.bits_to_target(block_header.bits))
         .to eq 0x13ce9000000000000000000000000000000000000000000
     end
   end
 
-  describe '#self.calculate_new_bits' do
+  describe '.calculate_new_bits' do
     it 'computes the new bits 2016-block time differential and the previous bits' do
       expect(described_class.calculate_new_bits(from_hex_to_bytes('54d80118'), 302400))
         .to eq from_hex_to_bytes('00157617')
@@ -85,37 +85,37 @@ RSpec.describe Bitcoin::Block do
 
   describe '#bip9?' do
     context 'with bip9 block' do
-      it { expect(block_header.bip9?).to eq true }
+      it { expect(block_header.bip9?).to be true }
     end
 
     context 'with non bip9 block' do
       before { block_header.version = 0x01000000 }
 
-      it { expect(block_header.bip9?).to eq false }
+      it { expect(block_header.bip9?).to be false }
     end
   end
 
   describe '#bip91?' do
     context 'with non bip91 block' do
-      it { expect(block_header.bip91?).to eq false }
+      it { expect(block_header.bip91?).to be false }
     end
 
     context 'with bip91 block' do
       before { block_header.version = 0x01000010 }
 
-      it { expect(block_header.bip91?).to eq true }
+      it { expect(block_header.bip91?).to be true }
     end
   end
 
   describe '#bip141?' do
     context 'with bip141 block' do
-      it { expect(block_header.bip141?).to eq true }
+      it { expect(block_header.bip141?).to be true }
     end
 
     context 'with non bip141 block' do
       before { block_header.version = 0x01000000 }
 
-      it { expect(block_header.bip141?).to eq false }
+      it { expect(block_header.bip141?).to be false }
     end
   end
 
@@ -129,13 +129,13 @@ RSpec.describe Bitcoin::Block do
 
   describe '#pow_valid?' do
     context 'with valid PoW' do
-      it { expect(block_header.pow_valid?).to eq true }
+      it { expect(block_header.pow_valid?).to be true }
     end
 
     context 'with invalid PoW' do
       before { block_header.nonce = from_hex_to_bytes('00000000') }
 
-      it { expect(block_header.pow_valid?).to eq false }
+      it { expect(block_header.pow_valid?).to be false }
     end
   end
 end
