@@ -74,6 +74,12 @@ RSpec.describe EncodingHelper do
     end
   end
 
+  describe '#int_to_big_endian' do
+    it 'takes an integer and returns the big-endian byte sequence of length' do
+      expect(described_module.int_to_big_endian(1, 4)).to eq "\x00\x00\x00\x01"
+    end
+  end
+
   describe '#encode_varint' do
     context 'when the integer is below 0xfd' do
       let(:integer) { 0x5d }
@@ -119,6 +125,12 @@ RSpec.describe EncodingHelper do
   describe '#from_hex_to_bytes' do
     it 'takes an hex string and returns the byte sequence' do
       expect(described_module.from_hex_to_bytes("A02F")).to eq "\xA0/"
+    end
+  end
+
+  describe '#bytes_to_hex' do
+    it 'takes a byte sequence and returns an hex string' do
+      expect(described_module.bytes_to_hex("\xA0/")).to eq "a02f"
     end
   end
 end
