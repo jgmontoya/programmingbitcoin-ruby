@@ -1,4 +1,5 @@
 # encoding: ascii-8bit
+
 require 'encoding_helper'
 
 RSpec.describe EncodingHelper do
@@ -131,6 +132,15 @@ RSpec.describe EncodingHelper do
   describe '#bytes_to_hex' do
     it 'takes a byte sequence and returns an hex string' do
       expect(described_module.bytes_to_hex("\xA0/")).to eq "a02f"
+    end
+  end
+
+  describe '#bytes_to_bit_field' do
+    let(:bytes) { described_module.from_hex_to_bytes("b55635") }
+
+    it 'takes a string of bytes and returns a bit field array' do
+      expect(described_module.bytes_to_bit_field(bytes))
+        .to eq [1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0]
     end
   end
 end

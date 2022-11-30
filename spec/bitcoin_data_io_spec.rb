@@ -1,6 +1,9 @@
+require 'bitcoin_data_io'
 require 'encoding_helper'
 
 RSpec.describe BitcoinDataIO do
+  include EncodingHelper
+
   def io(_hex_data)
     described_class.new(StringIO.new([_hex_data].pack("H*")))
   end
@@ -45,9 +48,5 @@ RSpec.describe BitcoinDataIO do
     it "properly reads the next 8 byte varint" do
       expect(io('ff0807060504030201ff').read_varint).to eq 0x102030405060708
     end
-  end
-
-  def bytes_to_hex(_bytes)
-    _bytes.unpack1("H*")
   end
 end
