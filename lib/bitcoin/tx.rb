@@ -87,6 +87,14 @@ module Bitcoin
       end
     end
 
+    def self.segwit?(_io)
+      _io.read(4)
+      flag_byte = _io.read(1)
+      _io.rewind
+
+      flag_byte == "\x00"
+    end
+
     def id
       HashHelper.hash256(serialize).reverse.unpack('H*')
     end
@@ -104,11 +112,12 @@ module Bitcoin
 
     attr_accessor :version, :locktime, :ins, :outs
 
-    def initialize(tx_fetcher: nil, testnet: false)
+    def initialize(tx_fetcher: nil, testnet: false, segwit: false)
       @tx_fetcher = tx_fetcher
       @ins = []
       @outs = []
       @testnet = testnet
+      @segswit = segwit
     end
 
     def fee

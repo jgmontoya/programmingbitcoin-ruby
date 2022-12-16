@@ -1,11 +1,13 @@
 require 'bitcoin/tx'
 require_relative '../support/fixture_macros'
 require_relative '../../lib/ecc/private_key'
+require 'pry'
 
 RSpec.describe Bitcoin::Tx do
   load_transaction_set 'transactions'
 
   let(:raw_tx) { resolve_tx '452c629d67e41baec3ac6f04fe744b4b9617f8f859c63b3002f8684e7a4fee03' }
+  let(:raw_tx_sw) { resolve_tx '9b4fc533a9a69ed0eb030b08e40150999a8aa871e918345cb19855298c103ba3' }
 
   describe ".parse" do
     def parse(*_args)
@@ -215,6 +217,20 @@ fc36896e7d9402824ed38e856676ee94bfdb0c6c4bcd8b2e5666a0400000000000000c7270000a5e
 
       it 'returns the block height' do
         expect(tx.coinbase_height).to be 465879
+      end
+    end
+  end
+
+  describe '#segwit?' do
+    context 'when tx is legacy' do
+      it 'returns false' do
+        expect(described_class.segwit?(raw_tx)).to be false
+      end
+    end
+
+    context 'when tx is segwit' do
+      it 'returns true' do
+        expect(described_class.segwit?(raw_tx_sw)).to be true
       end
     end
   end
