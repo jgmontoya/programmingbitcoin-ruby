@@ -17,12 +17,13 @@ module Bitcoin
     class TxIn
       include EncodingHelper
 
-      def initialize(prev_tx, prev_index, script_sig = nil, sequence = 0xffffffff)
+      def initialize(prev_tx, prev_index, script_sig = nil, sequence = 0xffffffff, witness = nil)
         @prev_tx = prev_tx
         @prev_index = prev_index
         @script_sig = script_sig || Script.new
         @sequence = sequence
         @tx_fetcher = UriFetcher.new
+        @witness = witness
       end
 
       def self.parse(_io)
@@ -54,7 +55,7 @@ module Bitcoin
         result << to_bytes(sequence, 4, 'little')
       end
 
-      attr_accessor :prev_tx, :prev_index, :script_sig, :sequence
+      attr_accessor :prev_tx, :prev_index, :script_sig, :sequence, :witness
     end
 
     class TxOut
@@ -77,6 +78,10 @@ module Bitcoin
     end
 
     def self.parse(_io, _options = {})
+      segwit?(_io) ? parse_segwit(_io, _options) : parse_legacy(_io, _options)
+    end
+
+    def self.parse_legacy(_io, _options)
       io = BitcoinDataIO(_io)
 
       new(_options).tap do |tx|
@@ -87,12 +92,43 @@ module Bitcoin
       end
     end
 
+    def self.parse_segwit(_io, _options)
+      io = BitcoinDataIO(_io)
+
+      new(_options).tap do |tx|
+        tx.version = io.read_le_int32
+        marker = io.read(2)
+        raise "Not a segwit transaction #{marker}" unless marker == "\x00\x01"
+
+        io.read_varint.times { tx.ins << TxIn.parse(io) }
+        io.read_varint.times { tx.outs << TxOut.parse(io) }
+        tx.read_witness_items(io)
+        tx.locktime = io.read_le_int32
+        tx.segwit = true
+      end
+    end
+
     def self.segwit?(_io)
       _io.read(4)
       flag_byte = _io.read(1)
       _io.rewind
 
       flag_byte == "\x00"
+    end
+
+    def read_witness_items(_io)
+      @ins.each do |tx_in|
+        items = []
+        _io.read_varint.times do
+          item_len = _io.read_varint
+          items << if item_len.zero?
+                     0
+                   else
+                     _io.read(item_len)
+                   end
+        end
+        tx_in.witness = items
+      end
     end
 
     def id
@@ -110,14 +146,14 @@ module Bitcoin
       result
     end
 
-    attr_accessor :version, :locktime, :ins, :outs
+    attr_accessor :version, :locktime, :ins, :outs, :segwit
 
     def initialize(tx_fetcher: nil, testnet: false, segwit: false)
       @tx_fetcher = tx_fetcher
       @ins = []
       @outs = []
       @testnet = testnet
-      @segswit = segwit
+      @segwit = segwit
     end
 
     def fee

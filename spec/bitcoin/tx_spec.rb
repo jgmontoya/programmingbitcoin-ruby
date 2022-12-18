@@ -14,48 +14,109 @@ RSpec.describe Bitcoin::Tx do
       described_class.parse(*_args)
     end
 
-    it "properly parses the version" do
-      expect(parse(raw_tx).version).to eq(1)
-    end
+    context 'when tx is legacy' do
+      it "properly parses the version" do
+        expect(parse(raw_tx).version).to eq(1)
+      end
 
-    it "properly parses input count" do
-      expect(parse(raw_tx).ins.count).to eq(1)
-    end
+      it "properly parses input count" do
+        expect(parse(raw_tx).ins.count).to eq(1)
+      end
 
-    it "properly parses each input prev_tx" do
-      expect(bytes_to_hex(parse(raw_tx).ins.first.prev_tx)).to eq "d1c789a9c60383bf715f3f6ad9d14b91\
+      it "properly parses each input prev_tx" do
+        expect(bytes_to_hex(parse(raw_tx).ins.first.prev_tx)).to eq "d1c789a9c60383bf715f3f6ad9d14b91\
 fe55f3deb369fe5d9280cb1a01793f81"
-    end
+      end
 
-    it "properly parses each input prev_index" do
-      expect(parse(raw_tx).ins.first.prev_index).to eq 0
-    end
+      it "properly parses each input prev_index" do
+        expect(parse(raw_tx).ins.first.prev_index).to eq 0
+      end
 
-    it "properly parses each input script_sig" do
-      expect(bytes_to_hex(parse(raw_tx).ins.first.script_sig.serialize)).to eq "6b483045022100ed81ff192e75a\
-3fd2304004dcadb746fa5e24c5031ccfcf21320b0277457c98f02207a986d955c6e0cb35d446a89d3f56100f4d7f67801c3\
+      it "properly parses each input script_sig" do
+        expect(bytes_to_hex(parse(raw_tx).ins.first.script_sig.serialize))
+          .to eq "6b483045022100ed81ff192e75a3fd2304004dcadb746fa5e24c5031ccfcf21320\
+b0277457c98f02207a986d955c6e0cb35d446a89d3f56100f4d7f67801c3\
 1967743a9c8e10615bed01210349fc4e631e3624a545de3f89f5d8684c7b8138bd94bdd531d2e213bf016b278a"
+      end
+
+      it "properly parses each input sequence" do
+        expect(parse(raw_tx).ins.first.sequence).to eq 0xfffffffe
+      end
+
+      it "properly parses output count" do
+        expect(parse(raw_tx).outs.count).to eq(2)
+      end
+
+      it "properly parses each output amount" do
+        expect(parse(raw_tx).outs.map(&:amount)).to eq([32454049, 10011545])
+      end
+
+      it "properly parses each output script_pubkey" do
+        expect(parse(raw_tx).outs.map { |o| bytes_to_hex(o.script_pubkey.serialize) }).to eq(
+          [
+            '1976a914bc3b654dca7e56b04dca18f2566cdaf02e8d9ada88ac',
+            '1976a9141c4bc762dd5423e332166702cb75f40df79fea1288ac'
+          ]
+        )
+      end
     end
 
-    it "properly parses each input sequence" do
-      expect(parse(raw_tx).ins.first.sequence).to eq 0xfffffffe
-    end
+    context 'when tx is segwit' do
+      it "properly parses the version" do
+        expect(parse(raw_tx_sw).version).to eq(2)
+      end
 
-    it "properly parses output count" do
-      expect(parse(raw_tx).outs.count).to eq(2)
-    end
+      it "properly parses input count" do
+        expect(parse(raw_tx_sw).ins.count).to eq(1)
+      end
 
-    it "properly parses each output amount" do
-      expect(parse(raw_tx).outs.map(&:amount)).to eq([32454049, 10011545])
-    end
+      it "properly parses each input prev_tx" do
+        expect(bytes_to_hex(parse(raw_tx_sw).ins.first.prev_tx))
+          .to eq "2cbe83a5efe4d6582eb8f5a029c65f74832c734c89234081a25ad3f997ba74e8"
+      end
 
-    it "properly parses each output script_pubkey" do
-      expect(parse(raw_tx).outs.map { |o| bytes_to_hex(o.script_pubkey.serialize) }).to eq(
-        [
-          '1976a914bc3b654dca7e56b04dca18f2566cdaf02e8d9ada88ac',
-          '1976a9141c4bc762dd5423e332166702cb75f40df79fea1288ac'
-        ]
-      )
+      it "properly parses each input prev_index" do
+        expect(parse(raw_tx_sw).ins.first.prev_index).to eq 0
+      end
+
+      it "properly parses each input script_sig" do
+        expect(parse(raw_tx_sw).ins.first.script_sig.serialize).to eq "\x00"
+      end
+
+      it "properly parses each input sequence" do
+        expect(parse(raw_tx_sw).ins.first.sequence).to eq 0xffffffff
+      end
+
+      it "properly parses output count" do
+        expect(parse(raw_tx_sw).outs.count).to eq(2)
+      end
+
+      it "properly parses each output amount" do
+        expect(parse(raw_tx_sw).outs.map(&:amount)).to eq([176500, 2178124])
+      end
+
+      it "properly parses each output script_pubkey" do
+        skip
+        # todo : check correct script_pub. should be : [76a91433e73d0a40a60d02d19c8b8d38ad6da14306683b88ac, 001424ca8b17be9dfa365929dc9251da7d1533ca8b5e]
+        expect(parse(raw_tx_sw).outs.map { |o| bytes_to_hex(o.script_pubkey.serialize) }).to eq(
+          [
+            '1976a91433e73d0a40a60d02d19c8b8d38ad6da14306683b88ac',
+            '16001424ca8b17be9dfa365929dc9251da7d1533ca8b5e'
+          ]
+        )
+      end
+
+      it "properly parses each input witness" do
+        witness = parse(raw_tx_sw).ins.first.witness.map { |w| w.unpack1("H*") }
+
+        expect(witness).to eq(
+          [
+            "30440220635a9629c9eb17f7ebbfc200e674aff253ec4213c3e6d3207e86886af9f6a75"\
+            "1022072e2d54a9b8079e37cefd856ccf3c2383858346f55197d32c3a7fad18eac48e001",
+            "02550e51f143d27ed811e8cdf9008a21211bf26c73866a4b077117496b432421bd"
+          ]
+        )
+      end
     end
   end
 
