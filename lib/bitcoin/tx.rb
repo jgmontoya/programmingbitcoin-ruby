@@ -55,6 +55,18 @@ module Bitcoin
         result << to_bytes(sequence, 4, 'little')
       end
 
+      def serialize_witness
+        result = int_to_little_endian(@witness.size, 1)
+        @witness.each do |wt|
+          result << if wt.is_a?(Integer)
+                      int_to_little_endian(wt, 1)
+                    else
+                      encode_varint(wt.size) + wt
+                    end
+        end
+        result
+      end
+
       attr_accessor :prev_tx, :prev_index, :script_sig, :sequence, :witness
     end
 
@@ -132,10 +144,29 @@ module Bitcoin
     end
 
     def id
-      HashHelper.hash256(serialize).reverse.unpack('H*')
+      HashHelper.hash256(serialize_legacy).reverse.unpack('H*')
     end
 
     def serialize
+      segwit ? serialize_segwit : serialize_legacy
+    end
+
+    # rubocop:disable Metrics/AbcSize
+    def serialize_segwit
+      result = to_bytes(version, 4, 'little')
+      result << "\x00\x01"
+      result << encode_varint(ins.size)
+      result << ins.map(&:serialize).join
+      result << encode_varint(outs.size)
+      result << outs.map(&:serialize).join
+      result << ins.map(&:serialize_witness).join
+      result << to_bytes(locktime, 4, 'little')
+
+      result
+    end
+    # rubocop:enable Metrics/AbcSize
+
+    def serialize_legacy
       result = to_bytes(version, 4, 'little')
       result << encode_varint(ins.size)
       result << ins.map(&:serialize).join

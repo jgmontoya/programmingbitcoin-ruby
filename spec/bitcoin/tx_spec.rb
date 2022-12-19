@@ -295,4 +295,36 @@ fc36896e7d9402824ed38e856676ee94bfdb0c6c4bcd8b2e5666a0400000000000000c7270000a5e
       end
     end
   end
+
+  describe '#serialize' do
+    let(:tx) { described_class.parse raw_tx, tx_fetcher: tx_fetcher }
+
+    context 'when tx is legacy' do
+      it 'returns serialized tx' do
+        expect(bytes_to_hex(tx.serialize)).to eq(
+          "0100000001813f79011acb80925dfe69b3def355fe914bd1d96a3f5f71bf8303c6a989c7d1000000006b48"\
+          "3045022100ed81ff192e75a3fd2304004dcadb746fa5e24c5031ccfcf21320b0277457c98f02207a986d95"\
+          "5c6e0cb35d446a89d3f56100f4d7f67801c31967743a9c8e10615bed01210349fc4e631e3624a545de3f89f"\
+          "5d8684c7b8138bd94bdd531d2e213bf016b278afeffffff02a135ef01000000001976a914bc3b654dca7e56"\
+          "b04dca18f2566cdaf02e8d9ada88ac99c39800000000001976a9141c4bc762dd5423e332166702cb75f40d"\
+          "f79fea1288ac19430600"
+        )
+      end
+    end
+
+    context 'when tx is segwit' do
+      let(:tx_sw) { described_class.parse raw_tx_sw, tx_fetcher: tx_fetcher }
+
+      it 'returns serialized tx' do
+        expect(bytes_to_hex(tx_sw.serialize)).to eq(
+          "02000000000101e874ba97f9d35aa2814023894c732c83745fc629a0f5b82e58d6e4efa583be2c"\
+          "0000000000ffffffff0274b10200000000001976a91433e73d0a40a60d02d19c8b8d38ad6da1430"\
+          "6683b88ac4c3c21000000000016001424ca8b17be9dfa365929dc9251da7d1533ca8b5e024730440"\
+          "220635a9629c9eb17f7ebbfc200e674aff253ec4213c3e6d3207e86886af9f6a751022072e2d54a9"\
+          "b8079e37cefd856ccf3c2383858346f55197d32c3a7fad18eac48e0012102550e51f143d27ed811e8"\
+          "cdf9008a21211bf26c73866a4b077117496b432421bd00000000"
+        )
+      end
+    end
+  end
 end
