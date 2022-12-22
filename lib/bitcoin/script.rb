@@ -110,6 +110,18 @@ module Bitcoin
       && cmds[2] == 135
     end
 
+    def self.p2pkh(hash160)
+      Script.new([118, 169, hash160, 136, 172])
+    end
+
+    def self.p2wpkh(hash160)
+      Script.new([0, hash160])
+    end
+
+    def self.p2wsh(hash256)
+      Script.new([0, hash256])
+    end
+
     private
 
     def resolve_cmd(cmd, cmds, stack, altstack, z)

@@ -43,6 +43,11 @@ module Bitcoin
         @tx_fetcher.fetch tx_id, testnet: testnet
       end
 
+      def value(testnet: false)
+        tx = fetch_tx testnet: testnet
+        tx.outs[prev_index].amount
+      end
+
       def script_pubkey(testnet: false)
         tx = fetch_tx testnet: testnet
         tx.outs[prev_index].script_pubkey
@@ -177,7 +182,8 @@ module Bitcoin
       result
     end
 
-    attr_accessor :version, :locktime, :ins, :outs, :segwit
+    attr_accessor :version, :locktime, :ins, :outs, :segwit,
+                  :_hash_prevouts, :_hash_sequence, :_hash_outputs
 
     def initialize(tx_fetcher: nil, testnet: false, segwit: false)
       @tx_fetcher = tx_fetcher
@@ -185,6 +191,9 @@ module Bitcoin
       @outs = []
       @testnet = testnet
       @segwit = segwit
+      @_hash_prevouts = nil
+      @_hash_sequence = nil
+      @_hash_outputs = nil
     end
 
     def fee
@@ -201,6 +210,54 @@ module Bitcoin
       hash256 = HashHelper.hash256 result
 
       from_bytes hash256, 'big'
+    end
+
+    # rubocop:disable Metrics/AbcSize
+    def sig_hash_bip143(input_index, redeem_script: nil, witness_script: nil)
+      tx_in = @ins[input_index]
+      result = int_to_little_endian(version, 4)
+
+      result += hash_prevouts + hash_sequence
+      result += tx_in.prev_tx.reverse + int_to_little_endian(tx_in.prev_index, 4)
+      result += build_script_raw(redeem_script, witness_script, tx_in)
+      result += int_to_little_endian(tx_in.value, 8)
+      result += int_to_little_endian(tx_in.sequence, 4)
+      result += hash_outputs
+      result << int_to_little_endian(locktime, 4)
+      result << int_to_little_endian(SIGHASH_ALL, 4)
+
+      hash256 = HashHelper.hash256 result
+
+      from_bytes hash256, 'big'
+    end
+    # rubocop:enable Metrics/AbcSize
+
+    def hash_prevouts
+      unless @_hash_prevouts
+        all_prevouts = ''
+        all_sequence = ''
+        @ins.each do |tx_in|
+          all_prevouts += tx_in.prev_tx.reverse + int_to_little_endian(tx_in.prev_index, 4)
+          all_sequence += int_to_little_endian(tx_in.sequence, 4)
+        end
+        @_hash_prevouts = HashHelper.hash256(all_prevouts)
+        @_hash_sequence = HashHelper.hash256(all_sequence)
+      end
+      @_hash_prevouts
+    end
+
+    def hash_sequence
+      hash_prevouts unless @_hash_sequence
+      @_hash_sequence
+    end
+
+    def hash_outputs
+      unless @_hash_outputs
+        all_outputs = ''
+        @outs.each { |tx_out| all_outputs += tx_out.serialize }
+        @_hash_outputs = HashHelper.hash256(all_outputs)
+      end
+      @_hash_outputs
     end
 
     def verify_input(input_index)
@@ -278,6 +335,16 @@ module Bitcoin
 
     def encode_outs
       encode_varint(outs.size) + outs.map(&:serialize).join
+    end
+
+    def build_script_raw(redeem_script, witness_script, tx_in)
+      if witness_script
+        witness_script.serialize
+      elsif redeem_script
+        Script.p2pkh(redeem_script.cms[1]).serialize
+      else
+        Script.p2pkh(tx_in.script_pubkey(testnet: @testnet).cmds[1]).serialize
+      end
     end
 
     def calculate_fee

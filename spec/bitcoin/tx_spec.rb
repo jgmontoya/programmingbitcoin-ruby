@@ -1,10 +1,13 @@
 require 'bitcoin/tx'
+require 'bitcoin/script'
+require 'encoding_helper'
 require_relative '../support/fixture_macros'
 require_relative '../../lib/ecc/private_key'
 require 'pry'
 
 RSpec.describe Bitcoin::Tx do
   load_transaction_set 'transactions'
+  include EncodingHelper
 
   let(:raw_tx) { resolve_tx '452c629d67e41baec3ac6f04fe744b4b9617f8f859c63b3002f8684e7a4fee03' }
   let(:raw_tx_sw) { resolve_tx '9b4fc533a9a69ed0eb030b08e40150999a8aa871e918345cb19855298c103ba3' }
@@ -176,6 +179,24 @@ bf016b278afeffffff02a135ef01000000001976a914bc3b654dca7e56b04dca18f2566cdaf02e8d
     it 'returns the correct sig_hash' do
       expect(tx.sig_hash(0))
         .to eq 18037338614366229343027734445863508930887653120159589908930024158807354868134
+    end
+  end
+
+  describe '#sig_hash_bip143' do
+    context 'when tx is segwit' do
+      let(:tx_sw) { described_class.parse raw_tx_sw, tx_fetcher: tx_fetcher }
+
+      it 'returns the correct sig_hash' do
+        skip
+        # todo: give correct witness as input
+
+        cmd = tx_sw.ins.first.witness.last
+        raw_witness = encode_varint(cmd.size) + cmd
+        witness_script = Bitcoin::Script.parse(StringIO.new(raw_witness))
+
+        expect(tx_sw.sig_hash_bip143(0, witness_script: witness_script))
+          .to eq 999999
+      end
     end
   end
 
